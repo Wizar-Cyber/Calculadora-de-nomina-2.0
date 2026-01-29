@@ -17,6 +17,8 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
         "http://127.0.0.1:3002",
+        "https://*.netlify.app",  # Permitir cualquier sitio de Netlify
+        "https://*.vercel.app",   # Si usas Vercel en el futuro
     ],
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],

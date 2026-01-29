@@ -13,8 +13,11 @@ interface Evento {
   festivo?: boolean;
 }
 
+// Usar variable de entorno o localhost como fallback
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000/api';
+
 const api = axios.create({
-  baseURL: 'http://localhost:8001/api',
+  baseURL: API_BASE_URL,
   headers: { 'Content-Type': 'application/json' },
   timeout: 10000,
   withCredentials: false,
