@@ -74,14 +74,20 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       fin: (turnoCompleto?.hora_fin || shift.fin)?.slice(0, 5) || ''
     };
     set((state) => ({ shifts: [...state.shifts, shiftConHoras] }));
-    void get().calculatePayroll();
+    // Usar setTimeout para asegurar que el estado se actualiza antes de calcular
+    setTimeout(() => {
+      void get().calculatePayroll();
+    }, 0);
   },
 
   removeShift: (index) => {
     set((state) => ({
       shifts: state.shifts.filter((_, i) => i !== index),
     }));
-    void get().calculatePayroll();
+    // Usar setTimeout para asegurar que el estado se actualiza antes de calcular
+    setTimeout(() => {
+      void get().calculatePayroll();
+    }, 0);
   },
 
   clearAll: () =>
@@ -132,6 +138,8 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
     const { quincena, shifts, eventos, extras, deduccionesManuals } = get();
     const codigos = shifts.map((s) => s.codigo);
 
+    console.log('[calculatePayroll] Iniciando cálculo', { quincena, codigos, eventosCount: eventos.length, extrasCount: extras.length, deduccionesCount: deduccionesManuals.length });
+
     try {
       // Construir lista de eventos incluyendo los que vienen del estado
       const eventosAgrupados: Record<string, number> = {};
@@ -172,7 +180,9 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       
       // Si hay eventos o extras o deducciones, usar calcularNominaConEventos
       if (eventosParaBackend.length > 0) {
+        console.log('[calculatePayroll] Llamando a calcularNominaConEventos', { quincena, codigos, eventosCount: eventosParaBackend.length });
         const data = await calcularNominaConEventos(quincena, codigos, eventosParaBackend);
+        console.log('[calculatePayroll] Respuesta de calcularNominaConEventos:', data);
         set({
           devengado: data.devengado,
           deducciones: data.deducciones,
@@ -184,7 +194,9 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
           diasTrabajados: data.dias_trabajados,
         });
       } else {
+        console.log('[calculatePayroll] Llamando a calcularNomina sin eventos', { quincena, codigos });
         const data = await calcularNomina(quincena, codigos);
+        console.log('[calculatePayroll] Respuesta de calcularNomina:', data);
         set({
           devengado: data.devengado,
           deducciones: data.deducciones,
@@ -197,7 +209,10 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
         });
       }
     } catch (error) {
-      console.error('Error calculando:', error);
+      console.error('[calculatePayroll] Error calculando:', error);
+      if (error instanceof Error) {
+        console.error('[calculatePayroll] Error message:', error.message);
+      }
     }
   },
 
