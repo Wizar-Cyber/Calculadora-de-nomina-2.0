@@ -211,24 +211,33 @@ class CalculadoraNomina:
         # Incapacidad: reduce días trabajados y paga al 66.67%.
         self.dias_incapacidad += 1
         self.dias_trabajados -= 1
-        # Ya existe el día completo dentro del básico; solo se descuenta el 33.33%.
-        self.devengado -= self.valor_dia_basico * (1 - 0.6667)
+        
+        # Restar el día completo del básico
+        self.devengado -= self.valor_dia_basico
+        
+        # SUMAR el 66.67% en devengados
+        valor_pago = self.valor_dia_basico * 0.6667
+        self.devengado += valor_pago
+        
+        # Registrar en el desglose para que aparezca en DEVENGADOS
+        if "incapacidad" not in self.recargos_agrupados:
+            self.recargos_agrupados["incapacidad"] = {"valor": 0, "dias": 0}
+        self.recargos_agrupados["incapacidad"]["valor"] = self.dias_incapacidad * valor_pago
+        self.recargos_agrupados["incapacidad"]["dias"] = self.dias_incapacidad
 
     def agregar_suspension(self):
         """Agrega suspensión: descuenta una jornada del básico y ajusta días trabajados."""
         # Suspensión: descuenta un día del básico.
-        # Restar 6 horas (1 día) del básico
-        self.devengado -= self.valor_dia_basico
-        self.dias_trabajados -= 1
         self.dias_suspension += 1
+        self.dias_trabajados -= 1
+        self.devengado -= self.valor_dia_basico
 
     def agregar_licencia(self):
         """Agrega licencia no remunerada: descuenta una jornada del básico."""
         # Licencia: descuenta un día del básico.
-        # Restar 6 horas (1 día) del básico
-        self.devengado -= self.valor_dia_basico
-        self.dias_trabajados -= 1
         self.dias_licencia += 1
+        self.dias_trabajados -= 1
+        self.devengado -= self.valor_dia_basico
 
     # ----------------------------
     # HORAS EXTRAS
@@ -250,17 +259,47 @@ class CalculadoraNomina:
 
     def get_desglose_devengados(self):
         """Retorna el desglose completo de devengados incluyendo eventos."""
+        # Calcular cantidad de civicas para la etiqueta
+        civicas_cantidad = PASAJES_CIVICA_CANTIDAD
+        if self.tiene_cp():
+            civicas_cantidad -= 1
+        if self.tiene_suspension():
+            civicas_cantidad -= 2
+        if civicas_cantidad < 0:
+            civicas_cantidad = 0
+            
         desglose = {
-            "salario_basico": self.dias_trabajados * self.valor_dia_basico,
-            "recargos": {k: f"{v['horas']:.1f}h | ${v['valor']:,.0f}" for k, v in self.recargos_agrupados.items()},
-            "civicas": self.total_civicas(),
-            "auxilio": self.total_auxilio()
+            "Salario Básico (15 días)": self.dias_trabajados * self.valor_dia_basico,
+            f"Cívicas ({civicas_cantidad} pasajes)": self.total_civicas(),
+            "Auxilio de Transporte": self.total_auxilio()
         }
         
-        # Solo agregar incapacidad a devengados (paga 66.67%)
+        # Agregar recargos con formato (excluyendo incapacidad)
+        # Mapeo de nombres de recargos a etiquetas en Title Case
+        recargos_map = {
+            "R ORDINARIO NOCT": "R Ordinario Nocturno",
+            "R ORDINARIO NOC": "R Ordinario Nocturno",
+            "R FESTIVO DIURN": "R Festivo Diurno",
+            "R FESTIVO NOCT": "R Festivo Nocturno"
+        }
+        
+        for k, v in self.recargos_agrupados.items():
+            if k != "incapacidad":
+                # Usar mapeo si existe, sino usar la clave original
+                etiqueta = recargos_map.get(k, k.title())
+                desglose[etiqueta] = f"{v['horas']:.1f}h | ${v['valor']:,.0f}"
+        
+        # Agregar incapacidad a devengados (paga 66.67%)
         if self.dias_incapacidad > 0:
+            dias_text = f"{self.dias_incapacidad} día{'s' if self.dias_incapacidad > 1 else ''}"
             valor_incapacidad = self.dias_incapacidad * self.valor_dia_basico * 0.6667
-            desglose["incapacidad"] = valor_incapacidad
+            desglose[f"Incapacidad ({dias_text} al 66.67%)"] = valor_incapacidad
+        
+        # Agregar horas extras al desglose
+        for nombre, horas, valor in self.detalles_desglose:
+            key = f"{nombre} ({horas:.2f}h)"
+            # Si la clave ya existe, acumular el valor
+            desglose[key] = desglose.get(key, 0) + valor
             
         return desglose
 
@@ -278,12 +317,15 @@ class CalculadoraNomina:
                 deducciones[concepto] = 0
             deducciones[concepto] += valor
             
-        # Agregar suspension y licencia como deducciones
+        # Agregar suspensiones si existen
         if self.dias_suspension > 0:
-            deducciones["suspension"] = self.dias_suspension * self.valor_dia_basico
+            dias_text = f"{self.dias_suspension} día{'s' if self.dias_suspension > 1 else ''}"
+            deducciones[f"Suspensión ({dias_text})"] = self.dias_suspension * self.valor_dia_basico
             
+        # Agregar licencias si existen
         if self.dias_licencia > 0:
-            deducciones["licencia"] = self.dias_licencia * self.valor_dia_basico
+            dias_text = f"{self.dias_licencia} día{'s' if self.dias_licencia > 1 else ''}"
+            deducciones[f"Licencia ({dias_text})"] = self.dias_licencia * self.valor_dia_basico
             
         return deducciones
 

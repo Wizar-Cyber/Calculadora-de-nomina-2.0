@@ -16,7 +16,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { agregarDeduccion, agregarExtra } from '@/lib/api';
 import { usePayrollStore } from '@/store/usePayrollStore';
 
 interface ExtrasModalProps {
@@ -52,7 +51,6 @@ export function ExtrasModal({
   const isDeduccion = mode === 'deduccion';
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const { calculatePayroll } = usePayrollStore();
 
   const extrasForm = useForm<z.infer<typeof extrasSchema>>({
     resolver: zodResolver(extrasSchema),
@@ -69,9 +67,15 @@ export function ExtrasModal({
   const onSubmitExtras = async (values: z.infer<typeof extrasSchema>) => {
     try {
       setErrorMessage(null);
-      await agregarExtra(values.minutos, Number(values.recargo), 'Horas extras');
+      
+      // Obtener el label del recargo seleccionado
+      const recargoLabel = RECARGOS.find(r => r.value === values.recargo)?.label || 'Horas extras';
+      
+      // Usar el método del store que ya recalcula
+      const { addExtra } = usePayrollStore.getState();
+      await addExtra(values.minutos, Number(values.recargo), recargoLabel);
+      
       setSuccessMessage('Extras guardadas.');
-      await calculatePayroll();
       extrasForm.reset();
       setTimeout(() => setSuccessMessage(null), 2000);
       onClose();
@@ -83,9 +87,12 @@ export function ExtrasModal({
   const onSubmitDeduccion = async (values: z.infer<typeof deduccionSchema>) => {
     try {
       setErrorMessage(null);
-      await agregarDeduccion(values.concepto, values.monto);
+      
+      // Usar el método del store que ya recalcula
+      const { addDeduccion } = usePayrollStore.getState();
+      await addDeduccion(values.concepto, values.monto);
+      
       setSuccessMessage('Deducción guardada.');
-      await calculatePayroll();
       deduccionForm.reset();
       setTimeout(() => setSuccessMessage(null), 2000);
       onClose();

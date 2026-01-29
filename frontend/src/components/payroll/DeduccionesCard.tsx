@@ -8,20 +8,25 @@ interface DeduccionesCardProps {
 }
 
 const formatDeduccionLabel = (label: string, value: number): string => {
-  switch (label) {
+  // Normalizar para comparación
+  const labelNorm = label.toLowerCase();
+  
+  switch (labelNorm) {
     case 'salud':
-      return 'Salud (4%)';
+    case 'salud (4%)':
+      return 'Salud';
+    case 'pensión':
     case 'pension':
-      return 'Pensión (4%)';
-    case 'suspension':
-      const diasSusp = Math.round(value / 74453.73); // valor_dia_basico
-      return `Suspensión (${diasSusp} día${diasSusp > 1 ? 's' : ''})`;
-    case 'licencia':
-      const diasLic = Math.round(value / 74453.73); // valor_dia_basico
-      return `Licencia (${diasLic} día${diasLic > 1 ? 's' : ''})`;
+    case 'pensión (4%)':
+    case 'pension (4%)':
+      return 'Pensión';
     default:
-      if (label === 'pension') return 'Pensión (4%)';
-      return label.replace(/_/g, ' ').replace(/\b(?!pension)\w/g, l => l.toUpperCase());
+      // Handle labels that already contain "Suspensión" or "Licencia"
+      if (label.includes('Suspensión') || label.includes('Licencia')) {
+        return label;
+      }
+      // Return label as-is if it's already formatted (Title Case)
+      return label;
   }
 };
 
@@ -30,6 +35,9 @@ const formatDeduccionValue = (label: string, value: number): string => {
 };
 
 export function DeduccionesCard({ items, total }: DeduccionesCardProps) {
+  // Debug log
+  console.log('DeduccionesCard items:', items, 'total:', total);
+  
   return (
     <div className="bg-gray-50 p-6 text-slate-800 flex flex-col flex-grow min-h-0">
       <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">

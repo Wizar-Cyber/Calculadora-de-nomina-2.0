@@ -1,12 +1,14 @@
 import { create } from 'zustand';
 import type { Shift, Turno } from '@/lib/types';
-import { calcularNomina, fetchTurnos, agregarCP, agregarSuspension, agregarLicencia, agregarIncapacidad, agregarDispo } from '@/lib/api';
+import { calcularNomina, calcularNominaConEventos, fetchTurnos } from '@/lib/api';
 
 interface PayrollState {
   quincena: string;
   shifts: Shift[];
   turnosDisponibles: Turno[];
   eventos: Array<{ tipo: string; codigo: string; inicio: string; fin: string; detalles: string }>;
+  extras: Array<{ minutos: number; recargo: number; nombre: string }>;
+  deduccionesManuals: Array<{ nombre: string; valor: number }>;
   devengado: number;
   deducciones: number;
   neto: number;
@@ -20,6 +22,10 @@ interface PayrollState {
   loadTurnos: () => Promise<void>;
   addShift: (shift: Shift) => void;
   removeShift: (index: number) => void;
+  addExtra: (minutos: number, recargo: number, nombre: string) => Promise<void>;
+  addDeduccion: (nombre: string, valor: number) => Promise<void>;
+  removeExtra: (index: number) => Promise<void>;
+  removeDeduccion: (index: number) => Promise<void>;
   clearAll: () => void;
   calculatePayroll: () => Promise<void>;
   addCP: () => Promise<void>;
@@ -37,6 +43,8 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
   shifts: [],
   turnosDisponibles: [],
   eventos: [],
+  extras: [],
+  deduccionesManuals: [],
   devengado: 0,
   deducciones: 0,
   neto: 0,
@@ -80,6 +88,8 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
     set({
       shifts: [],
       eventos: [],
+      extras: [],
+      deduccionesManuals: [],
       devengado: 0,
       deducciones: 0,
       neto: 0,
@@ -90,61 +100,127 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       diasTrabajados: 0,
     }),
 
+  addExtra: async (minutos, recargo, nombre) => {
+    set((state) => ({
+      extras: [...state.extras, { minutos, recargo, nombre }],
+    }));
+    await get().calculatePayroll();
+  },
+
+  addDeduccion: async (nombre, valor) => {
+    set((state) => ({
+      deduccionesManuals: [...state.deduccionesManuals, { nombre, valor }],
+    }));
+    await get().calculatePayroll();
+  },
+
+  removeExtra: async (index) => {
+    set((state) => ({
+      extras: state.extras.filter((_, i) => i !== index),
+    }));
+    await get().calculatePayroll();
+  },
+
+  removeDeduccion: async (index) => {
+    set((state) => ({
+      deduccionesManuals: state.deduccionesManuals.filter((_, i) => i !== index),
+    }));
+    await get().calculatePayroll();
+  },
+
   calculatePayroll: async () => {
-    const { quincena, shifts } = get();
+    const { quincena, shifts, eventos, extras, deduccionesManuals } = get();
     const codigos = shifts.map((s) => s.codigo);
 
     try {
-      const data = await calcularNomina(quincena, codigos);
-      set({
-        devengado: data.devengado,
-        deducciones: data.deducciones,
-        neto: data.neto,
-        auxilio: data.auxilio,
-        civicas: data.civicas,
-        desgloseDevengados: data.desglose_devengados,
-        desgloseDeducciones: data.desglose_deducciones,
-        diasTrabajados: data.dias_trabajados,
+      // Construir lista de eventos incluyendo los que vienen del estado
+      const eventosAgrupados: Record<string, number> = {};
+      eventos.forEach(e => {
+        const tipo = e.tipo === 'Suspensión' ? 'suspension' : 
+                     e.tipo === 'Licencia' ? 'licencia' :
+                     e.tipo === 'Incapacidad' ? 'incapacidad' :
+                     e.tipo === 'CP' ? 'cp' :
+                     e.tipo === 'DISPO' ? 'dispo' :
+                     e.tipo.toLowerCase();
+        eventosAgrupados[tipo] = (eventosAgrupados[tipo] || 0) + 1;
       });
+      
+      // Construir lista de eventos para el backend incluyendo extras y deducciones
+      const eventosParaBackend: any[] = Object.entries(eventosAgrupados).map(([tipo, cantidad]) => ({
+        tipo,
+        cantidad
+      }));
+      
+      // Agregar extras
+      extras.forEach(extra => {
+        eventosParaBackend.push({
+          tipo: 'extra',
+          minutos: extra.minutos,
+          recargo: extra.recargo,
+          nombre: extra.nombre,
+        });
+      });
+      
+      // Agregar deducciones
+      deduccionesManuals.forEach(deduccion => {
+        eventosParaBackend.push({
+          tipo: 'deduccion',
+          nombre: deduccion.nombre,
+          valor: deduccion.valor,
+        });
+      });
+      
+      // Si hay eventos o extras o deducciones, usar calcularNominaConEventos
+      if (eventosParaBackend.length > 0) {
+        const data = await calcularNominaConEventos(quincena, codigos, eventosParaBackend);
+        set({
+          devengado: data.devengado,
+          deducciones: data.deducciones,
+          neto: data.neto,
+          auxilio: data.auxilio,
+          civicas: data.civicas,
+          desgloseDevengados: data.desglose_devengados,
+          desgloseDeducciones: data.desglose_deducciones,
+          diasTrabajados: data.dias_trabajados,
+        });
+      } else {
+        const data = await calcularNomina(quincena, codigos);
+        set({
+          devengado: data.devengado,
+          deducciones: data.deducciones,
+          neto: data.neto,
+          auxilio: data.auxilio,
+          civicas: data.civicas,
+          desgloseDevengados: data.desglose_devengados,
+          desgloseDeducciones: data.desglose_deducciones,
+          diasTrabajados: data.dias_trabajados,
+        });
+      }
     } catch (error) {
       console.error('Error calculando:', error);
     }
   },
 
   addCP: async () => {
-    const { quincena, shifts } = get();
-    const codigos = shifts.map((s) => s.codigo);
     try {
-      const data = await agregarCP(quincena, codigos);
-      // Add CP to eventos
       get().addEvento({
         tipo: 'CP',
         codigo: 'CP',
         inicio: '-',
         fin: '-',
-        detalles: '6h base'
+        detalles: 'Compensatorio'
       });
-      set({
-        devengado: data.devengado,
-        deducciones: data.deducciones,
-        neto: data.neto,
-        auxilio: data.auxilio,
-        civicas: data.civicas,
-        desgloseDevengados: data.desglose_devengados,
-        desgloseDeducciones: data.desglose_deducciones,
-        diasTrabajados: data.dias_trabajados,
-      });
+      await get().calculatePayroll();
     } catch (error) {
       console.error('Error agregando CP:', error);
+      set((state) => ({
+        eventos: state.eventos.filter((e) => e.tipo !== 'CP')
+      }));
     }
   },
 
   addSuspension: async () => {
-    const { quincena, shifts } = get();
-    const codigos = shifts.map((s) => s.codigo);
     try {
-      const data = await agregarSuspension(quincena, codigos);
-      // Add Suspensión to eventos
       get().addEvento({
         tipo: 'Suspensión',
         codigo: 'SUSP',
@@ -152,28 +228,17 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
         fin: '-',
         detalles: 'Sin pago'
       });
-      set((state) => ({
-        ...state,
-        devengado: data.devengado,
-        deducciones: data.deducciones,
-        neto: data.neto,
-        auxilio: data.auxilio,
-        civicas: data.civicas,
-        desgloseDevengados: data.desglose_devengados,
-        desgloseDeducciones: data.desglose_deducciones,
-        diasTrabajados: data.dias_trabajados,
-      }));
+      await get().calculatePayroll();
     } catch (error) {
       console.error('Error agregando suspensión:', error);
+      set((state) => ({
+        eventos: state.eventos.filter((e) => e.tipo !== 'Suspensión')
+      }));
     }
   },
 
   addLicencia: async () => {
-    const { quincena, shifts } = get();
-    const codigos = shifts.map((s) => s.codigo);
     try {
-      const data = await agregarLicencia(quincena, codigos);
-      // Add Licencia to eventos
       get().addEvento({
         tipo: 'Licencia',
         codigo: 'LIC',
@@ -181,28 +246,17 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
         fin: '-',
         detalles: 'No remunerada'
       });
-      set((state) => ({
-        ...state,
-        devengado: data.devengado,
-        deducciones: data.deducciones,
-        neto: data.neto,
-        auxilio: data.auxilio,
-        civicas: data.civicas,
-        desgloseDevengados: data.desglose_devengados,
-        desgloseDeducciones: data.desglose_deducciones,
-        diasTrabajados: data.dias_trabajados,
-      }));
+      await get().calculatePayroll();
     } catch (error) {
       console.error('Error agregando licencia:', error);
+      set((state) => ({
+        eventos: state.eventos.filter((e) => e.tipo !== 'Licencia')
+      }));
     }
   },
 
   addIncapacidad: async () => {
-    const { quincena, shifts } = get();
-    const codigos = shifts.map((s) => s.codigo);
     try {
-      const data = await agregarIncapacidad(quincena, codigos);
-      // Add Incapacidad to eventos
       get().addEvento({
         tipo: 'Incapacidad',
         codigo: 'INCAP',
@@ -210,26 +264,18 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
         fin: '-',
         detalles: '66.67% pago'
       });
-      set((state) => ({
-        ...state,
-        devengado: data.devengado,
-        deducciones: data.deducciones,
-        neto: data.neto,
-        auxilio: data.auxilio,
-        civicas: data.civicas,
-        desgloseDevengados: data.desglose_devengados,
-        desgloseDeducciones: data.desglose_deducciones,
-        diasTrabajados: data.dias_trabajados,
-      }));
+      await get().calculatePayroll();
     } catch (error) {
       console.error('Error agregando incapacidad:', error);
+      set((state) => ({
+        eventos: state.eventos.filter((e) => e.tipo !== 'Incapacidad')
+      }));
     }
   },
 
   addDispo: async (data) => {
     try {
-      await agregarDispo(data.inicio, data.fin, data.festivo);
-      // Add DISPO to eventos with formatted hours
+      // Agregar DISPO a eventos
       get().addEvento({
         tipo: 'DISPO',
         codigo: 'DISPO',
@@ -237,7 +283,8 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
         fin: data.fin.slice(0, 5),
         detalles: `Tiempo disponible${data.festivo ? ' (festivo)' : ''}`
       });
-      // Recalculate payroll after adding DISPO
+      
+      // Recalcular la nómina completa (incluye extras, deducciones, eventos y DISPO)
       await get().calculatePayroll();
     } catch (error) {
       console.error('Error agregando DISPO:', error);
@@ -254,8 +301,10 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
     set((state) => ({
       eventos: state.eventos.filter((_, i) => i !== index)
     }));
+    
     // Recalculate payroll after removing evento
-    void get().calculatePayroll();
+    const { calculatePayroll } = get();
+    void calculatePayroll();
   },
 
   resetPayroll: async () => {
@@ -270,16 +319,14 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
         neto: data.neto,
         auxilio: data.auxilio,
         civicas: data.civicas,
-        desgloseDevengados: {
-          salario_basico: data.desglose_devengados.salario_basico,
-          civicas: data.desglose_devengados.civicas,
-          auxilio: data.desglose_devengados.auxilio,
-        },
+        desgloseDevengados: data.desglose_devengados,
         desgloseDeducciones: data.desglose_deducciones,
         diasTrabajados: data.dias_trabajados,
         // Clear all shifts and eventos
         shifts: [],
         eventos: [],
+        extras: [],
+        deduccionesManuals: [],
       });
     } catch (error) {
       console.error('Error reseteando nómina:', error);

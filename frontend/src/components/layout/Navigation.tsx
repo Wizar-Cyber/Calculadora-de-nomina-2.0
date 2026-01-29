@@ -10,7 +10,7 @@ interface NavigationProps {
 export function Navigation({ activeTab, onTabChange }: NavigationProps) {
   return (
     <Tabs value={activeTab} onValueChange={onTabChange}>
-      <TabsList className="w-full justify-start rounded-t-xl border border-white/10 bg-white/5 px-2">
+      <TabsList className="w-full justify-center rounded-t-xl border border-white/10 bg-white/5 px-2">
         <TabsTrigger value="config" className="border-b-2 border-transparent data-[state=active]:border-blue-500">
           <Settings className="h-4 w-4" />
           Configuración

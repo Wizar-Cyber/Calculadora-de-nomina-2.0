@@ -9,28 +9,32 @@ interface DevengadosCardProps {
 }
 
 const formatConceptLabel = (label: string, value: number | string, diasTrabajados?: number): string => {
-  switch (label) {
+  // Handle labels that are already formatted from backend
+  if (label.includes('Salario Básico') || 
+      label.includes('Cívicas') || 
+      label.includes('Civicas') ||
+      label === 'Auxilio de Transporte' ||
+      label.includes('Ordinario') ||
+      label.includes('Festivo') ||
+      label.includes('Incapacidad') ||
+      label.includes('Horas extras') ||
+      label.includes('horas extras')) {
+    return label;
+  }
+  
+  // Fallback for old format labels
+  const labelNorm = label.toLowerCase();
+  switch (labelNorm) {
     case 'salario_basico':
       return `Salario Básico (${diasTrabajados || 15} días)`;
     case 'civicas':
       return `Civicas (22 pasajes)`;
     case 'auxilio':
       return 'Auxilio de Transporte';
-    case 'incapacidad':
-      return `Incapacidad (33.33%) | ${formatCurrency(Number(value))}`;
     default:
       // Handle formatted recargo strings like "2.5h | 34,000"
       if (typeof value === 'string' && value.includes('h |')) {
-        const type = label.replace('r_', '').replace(/_/g, ' ').toUpperCase();
-        return `${type}`;
-      }
-      if (label.startsWith('r_')) {
-        const type = label.replace('r_', '').replace(/_/g, ' ').toUpperCase();
-        return `${type}`;
-      }
-      if (label.startsWith('extra_')) {
-        const type = label.replace('extra_', '').replace(/_/g, ' ').toUpperCase();
-        return `Extra ${type}`;
+        return label;
       }
       return label.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase());
   }
@@ -49,6 +53,9 @@ const formatCurrencyValue = (value: number | string): string => {
 };
 
 export function DevengadosCard({ items, total, diasTrabajados }: DevengadosCardProps) {
+  // Debug log
+  console.log('DevengadosCard items:', items, 'total:', total);
+  
   return (
     <div className="bg-white p-6 text-slate-800 flex flex-col flex-grow min-h-0">
       <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">

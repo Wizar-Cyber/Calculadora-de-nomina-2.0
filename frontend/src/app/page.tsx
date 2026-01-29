@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 
 import { Header } from '@/components/layout/Header';
-import { Navigation } from '@/components/layout/Navigation';
 import { ShiftInput } from '@/components/forms/ShiftInput';
 import { ActionButtons } from '@/components/forms/ActionButtons';
 import { ShiftTable } from '@/components/tables/ShiftTable';
@@ -16,9 +15,6 @@ import { ToastNotification } from '@/components/ui/ToastNotification';
 import { usePayrollStore } from '@/store/usePayrollStore';
 
 export default function Home() {
-  const [activeTab, setActiveTab] = useState<'config' | 'registros' | 'resultado'>(
-    'config'
-  );
   const [modalType, setModalType] = useState<'extras' | 'deduccion' | null>(null);
   const [dispoModalOpen, setDispoModalOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
@@ -47,71 +43,73 @@ export default function Home() {
 
   useEffect(() => {
     void loadTurnos();
-  }, [loadTurnos]);
-
-  useEffect(() => {
-    // Calculate initial payroll on component mount
     void resetPayroll();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
-      <Header quincena={quincena} turnosCount={shifts.length} turnosTotal={15} neto={neto} />
+      <Header quincena={quincena} neto={neto} />
 
-      <div className="mx-auto max-w-6xl px-4 py-6">
-        <Navigation activeTab={activeTab} onTabChange={(tab) => setActiveTab(tab as any)} />
-
-        <div className="mt-6">
-          {activeTab === 'config' && (
-            <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-              <div className="space-y-6 lg:col-span-2">
-                <ShiftInput />
-                <QuincenaSelect />
-              </div>
-              <div>
-                <ActionButtons
-                  onAction={async (action) => {
-                    if (action === 'Extras') setModalType('extras');
-                    if (action === 'Deducción') setModalType('deduccion');
-                    if (action === 'CP') {
-                      await addCP();
-                      showToast('Compensatorio agregado correctamente', 'success');
-                    }
-                    if (action === 'Suspensión') {
-                      await addSuspension();
-                      showToast('Suspensión agregada correctamente', 'info');
-                    }
-                    if (action === 'Licencia') {
-                      await addLicencia();
-                      showToast('Licencia agregada correctamente', 'info');
-                    }
-                    if (action === 'Incapacidad') {
-                      await addIncapacidad();
-                      showToast('Incapacidad agregada correctamente', 'info');
-                    }
-                    if (action === 'DISPO') setDispoModalOpen(true);
-                    if (action === 'Reset') {
-                      await resetPayroll();
-                      showToast('Nómina reseteada a valores básicos', 'success');
-                    }
-                  }}
-                />
-              </div>
+      <div className="mx-auto max-w-6xl px-4 py-6 space-y-12">
+        
+        {/* SECCIÓN CONFIGURACIÓN */}
+        <section>
+          <h2 className="mb-6 text-2xl font-bold text-white">Configuración</h2>
+          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+            <div className="space-y-6 lg:col-span-2">
+              <QuincenaSelect />
+              <ShiftInput />
             </div>
-          )}
+            <div>
+              <ActionButtons
+                onAction={async (action) => {
+                  if (action === 'Extras') setModalType('extras');
+                  if (action === 'Deducción') setModalType('deduccion');
+                  if (action === 'CP') {
+                    await addCP();
+                    showToast('Compensatorio agregado correctamente', 'success');
+                  }
+                  if (action === 'Suspensión') {
+                    await addSuspension();
+                    showToast('Suspensión agregada correctamente', 'info');
+                  }
+                  if (action === 'Licencia') {
+                    await addLicencia();
+                    showToast('Licencia agregada correctamente', 'info');
+                  }
+                  if (action === 'Incapacidad') {
+                    await addIncapacidad();
+                    showToast('Incapacidad agregada correctamente', 'info');
+                  }
+                  if (action === 'DISPO') setDispoModalOpen(true);
+                  if (action === 'Reset') {
+                    await resetPayroll();
+                    showToast('Nómina reseteada a valores básicos', 'success');
+                  }
+                }}
+              />
+            </div>
+          </div>
+        </section>
 
-          {activeTab === 'registros' && <ShiftTable shifts={shifts} />}
+        {/* SECCIÓN REGISTROS */}
+        <section>
+          <h2 className="mb-6 text-2xl font-bold text-white">Registros de Turnos</h2>
+          <ShiftTable shifts={shifts} />
+        </section>
 
-          {activeTab === 'resultado' && (
-            <PayrollSlip 
-              devengado={devengado} 
-              deducciones={deducciones} 
-              neto={neto}
-              auxilio={auxilio}
-              civicas={civicas}
-            />
-          )}
-        </div>
+        {/* SECCIÓN RESULTADO */}
+        <section>
+          <h2 className="mb-6 text-2xl font-bold text-white">Colilla de Pago</h2>
+          <PayrollSlip 
+            devengado={devengado} 
+            deducciones={deducciones} 
+            neto={neto}
+            auxilio={auxilio}
+            civicas={civicas}
+          />
+        </section>
 
         <Footer />
       </div>
