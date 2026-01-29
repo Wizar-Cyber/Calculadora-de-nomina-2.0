@@ -1,0 +1,17 @@
+[build]
+  command = "echo 'Backend configured'"
+  functions = "backend-node"
+  publish = "frontend/out"
+
+[[redirects]]
+  from = "/api/*"
+  to = "/api/:splat"
+  status = 200
+
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
+
+[env]
+  NODE_ENV = "production"
