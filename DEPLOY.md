@@ -1,65 +1,54 @@
 # 🚀 Guía de Despliegue - Calculadora de Nómina
 
-## Despliegue Unificado en Netlify (Frontend + Backend Node.js)
+## Despliegue en Netlify (Frontend) + Backend Remoto
 
 ### Requisitos
 - Cuenta en Netlify (https://netlify.com)
 - Repositorio en GitHub con el código
-- Node.js 18+ instalado localmente (para testing)
-
-### Ventajas de esta arquitectura
-- ✅ **Deployment único**: Todo en Netlify
-- ✅ **Sin dependencias externas**: No necesitas múltiples servicios
-- ✅ **CORS simplificado**: Frontend y backend en mismo dominio
-- ✅ **Fácil mantenimiento**: Un repositorio, una plataforma
-- ✅ **Escalable**: Netlify maneja automáticamente el tráfico
+- Backend desplegado en un servidor (ej: Heroku, PythonAnywhere, AWS, etc.)
+- URL del backend API accesible desde internet
 
 ---
 
-## 📍 Paso 1: Preparar el Backend Localmente
+## 📍 Paso 1: Preparar el Backend
 
-### Instalar dependencias del backend
+Tu backend debe estar desplegado en un servidor accesible desde internet.
 
+### Opciones para desplegar el backend:
+
+#### **Opción A: Heroku (Gratis con limitaciones)**
 ```bash
-cd backend-node
-npm install
+# 1. Instalar Heroku CLI
+# 2. Login
+heroku login
+
+# 3. Crear app
+heroku create tu-app-nomina
+
+# 4. Desplegar
+git push heroku main
+
+# 5. Tu URL será: https://tu-app-nomina.herokuapp.com
 ```
 
-### Verificar que funciona
+#### **Opción B: PythonAnywhere (Gratis)**
+- Ir a https://www.pythonanywhere.com
+- Crear cuenta
+- Subir código
+- Configurar app web
+- Tu URL será: https://tu-usuario.pythonanywhere.com
 
-```bash
-npm start
-```
+#### **Opción C: AWS/DigitalOcean/Render**
+- Documentación en sus sitios respectivos
+- Precios varían
 
-Deberías ver: `Servidor corriendo en puerto 3001`
-
-### Testear endpoints
-
-```bash
-# Obtener turnos
-curl http://localhost:3001/api/turnos
-
-# Calcular nómina
-curl -X POST http://localhost:3001/api/calcular \
-  -H "Content-Type: application/json" \
-  -d '{"quincena":"1","turnos":["250M"]}'
-```
+**Importante:** Asegúrate de que el backend esté corriendo y accesible en `https://tu-backend-url.com`
 
 ---
 
-## 📋 Paso 2: Verificar Configuración Frontend
+## 📋 Paso 2: Configurar Variables de Entorno en Netlify
 
-El frontend debe tener la variable correcta en `.env.local`:
-
-```plaintext
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3001/api
-```
-
-Para producción en Netlify, esta URL apuntará automáticamente al backend de Netlify.
-
----
-
-## 📍 Paso 3: Conectar el repositorio a Netlify
+### 2.1 Conectar el repositorio a Netlify
 
 1. Ve a https://netlify.com
 2. Click en "Add new site" → "Import an existing project"
@@ -67,9 +56,9 @@ Para producción en Netlify, esta URL apuntará automáticamente al backend de N
 4. Selecciona el repositorio `Calculadora-de-nomina-2.0`
 5. Click en "Import"
 
-### 3.1 Configurar Build Settings
+### 2.2 Configurar Build Settings
 
-En la página de configuración, Netlify debería detectar automáticamente:
+En la página de configuración, establece:
 
 **Build command:**
 ```bash
@@ -83,48 +72,57 @@ frontend/.next
 
 **Base directory:**
 ```
-(dejar vacío - raíz del proyecto)
+frontend
 ```
 
-Si NO se detecta automáticamente, configúralo manualmente:
-1. Ve a **Site settings** → **Build & deploy** → **Build settings**
-2. Edita y configura los valores arriba
+### 2.3 Agregar Variables de Entorno
 
-### 3.2 Archivo netlify.toml
+1. Ve a **Site settings** → **Build & deploy** → **Environment**
+2. Click en **Edit variables**
+3. Agrega la siguiente variable:
 
-El archivo `netlify.toml` en la raíz ya está configurado para:
-- Servir el frontend desde `frontend/.next`
-- Redirigir peticiones `/api/*` al backend Node.js
-- Manejar rutas del SPA correctamente
+| Key | Value |
+|-----|-------|
+| `NEXT_PUBLIC_API_BASE_URL` | `https://tu-backend-url.com/api` |
 
-No necesitas hacer nada más, Netlify lo lee automáticamente.
+**Ejemplo:**
+```
+NEXT_PUBLIC_API_BASE_URL=https://tu-app-nomina.herokuapp.com/api
+```
 
 ---
 
-## 🚀 Paso 4: Desplegar en Netlify
+## 🔗 Paso 3: Configurar CORS en el Backend
 
-### 4.1 Push a GitHub
+El backend debe permitir peticiones desde tu sitio de Netlify.
 
+En `backend/main.py`, verifica que `allow_origins` incluya:
+```python
+allow_origins=[
+    "http://localhost:3000",
+    "https://*.netlify.app",  # ← Esto permite cualquier sitio de Netlify
+]
+```
+
+**Si tu backend está en Heroku, Render, etc., el CORS ya debería estar configurado.**
+
+---
+
+## 🧪 Paso 4: Desplegar el Frontend
+
+1. **Push a GitHub:**
 ```bash
-cd "tu-proyecto/Calculadora de nomina"
 git add .
-git commit -m "Ready for Netlify deployment with Node.js backend"
+git commit -m "Configure for Netlify deployment"
 git push origin main
 ```
 
-### 4.2 Netlify desplegará automáticamente
+2. **Netlify desplegará automáticamente** cuando detecte cambios en `main`
 
-1. Netlify detectará los cambios en `main`
-2. Ejecutará los comandos de build
-3. El deploy debería tomar ~3-5 minutos
-
-### 4.3 Monitorear el deploy
-
-En tu panel de Netlify:
-1. Ve a **Deployments**
-2. Deberías ver un nuevo deploy en progreso
-3. Haz click en él para ver los logs
-4. Espera a que complete con estado "Published"
+3. **Espera a que termine el build:**
+   - Ve a tu sitio en Netlify
+   - Verifica que el build fue exitoso
+   - Tu URL será algo como: `https://tu-sitio.netlify.app`
 
 ---
 
@@ -132,219 +130,132 @@ En tu panel de Netlify:
 
 ### 5.1 Test en navegador
 
-1. Abre tu sitio en Netlify (ej: `https://tu-sitio.netlify.app`)
-2. Abre la consola del navegador (F12)
+1. Abre https://tu-sitio.netlify.app
+2. Abre la consola (F12)
 3. Ve a la pestaña "Network"
-4. Intenta agregar algunos turnos
-5. Deberías ver solicitudes exitosas a `/api/calcular`
+4. Intenta agregar un turno
+5. Verifica que los requests van a tu backend
 
-### 5.2 Verificar endpoints específicos
+**Deberías ver solicitudes a:** `https://tu-backend-url.com/api/calcular-con-eventos`
 
-En el navegador, abre estas URLs:
-```
-https://tu-sitio.netlify.app/api/turnos
-```
+### 5.2 Si ves error 404
 
-Deberías ver una lista de turnos en JSON.
+**Soluciona:**
 
-### 5.3 Si ves error en los cálculos:
+1. **Verifica la URL del backend:**
+   ```bash
+   curl https://tu-backend-url.com/api/turnos
+   ```
+   Debe retornar: `{"turnos": [...]}`
 
-**Opción A:** Limpiar caché
-```
-Ctrl+Shift+Delete (Windows/Linux)
-Cmd+Shift+Delete (Mac)
-```
-Luego recarga la página.
+2. **Verifica la variable de entorno en Netlify:**
+   - Site settings → Build & deploy → Environment
+   - Confirma que `NEXT_PUBLIC_API_BASE_URL` es correcta
 
-**Opción B:** Forzar redeploy
-- En Netlify: Deployments → Trigger deploy → Deploy site
+3. **Redeploy manual:**
+   - En Netlify, ve a **Deployments**
+   - Click en el botón **Trigger deploy** → **Deploy site**
 
-**Opción C:** Revisar los logs
-- En Netlify: Deployments → (selecciona el último) → Deploy log
-- Busca errores (líneas en rojo)
-
-
+4. **Limpia caché del navegador:**
+   ```
+   Ctrl+Shift+Delete (Windows/Linux)
+   Cmd+Shift+Delete (Mac)
+   ```
 
 ---
 
-## 📝 Checklist de Despliegue en Netlify
+## 📝 Checklist de Despliegue
 
+- [ ] Backend está desplegado en un servidor público
+- [ ] Backend URL es accesible desde internet (ej: `https://tu-backend.com/api/turnos`)
 - [ ] Repositorio está en GitHub
-- [ ] Backend Node.js instalado localmente (`npm install` en `backend-node/`)
-- [ ] Backend funciona localmente (`npm start` ✓)
-- [ ] Repositorio conectado a Netlify
-- [ ] `netlify.toml` está en el root del repositorio
-- [ ] Variables de entorno configuradas (si es necesario)
-- [ ] Build en Netlify fue exitoso
-- [ ] Aplicación abre sin errores en el sitio de Netlify
-- [ ] Puedo agregar turnos y calcular nómina sin errores
-- [ ] Las solicitudes a `/api/*` funcionan correctamente
+- [ ] Netlify está conectado al repositorio
+- [ ] Variable `NEXT_PUBLIC_API_BASE_URL` configurada en Netlify
+- [ ] `backend/main.py` permite CORS desde `*.netlify.app`
+- [ ] Build de Netlify fue exitoso (sin errores)
+- [ ] Aplicación abre sin errores en https://tu-sitio.netlify.app
+- [ ] Puedo agregar turnos sin errores 404
 
 ---
 
 ## 🐛 Troubleshooting
 
-### Error: "404 Not Found" para endpoints API
+### Error: "Failed to load resource: 404"
 
 **Causas posibles:**
 
-1. **`netlify.toml` no está en el root**
-   - Verifica que exista en la raíz del proyecto
-   - Netlify debe detectarlo automáticamente
+1. **Backend URL es incorrecta**
+   - Verifica en Netlify → Build & deploy → Environment
+   - Ejemplos correctos:
+     - `https://tu-app.herokuapp.com/api`
+     - `https://tu-usuario.pythonanywhere.com/api`
+     - `https://tu-backend.render.com/api`
 
-2. **Backend no se compiló**
-   - Revisa los logs del deploy en Netlify
-   - Busca errores en npm install o npm build
+2. **Backend no está corriendo**
+   - Abre https://tu-backend-url.com/api/turnos en el navegador
+   - Si retorna error, el backend no está activo
 
-3. **Variables de entorno no configuradas**
-   - Ve a Site settings → Build & deploy → Environment
-   - Verifica que todas las variables están presentes
-
-**Solución:**
-```
-En Netlify: Deployments → Trigger deploy → Deploy site
-```
+3. **CORS no configurado**
+   - Backend debe incluir `*.netlify.app` en `allow_origins`
+   - Si no, agrega y redeploy el backend
 
 ### Error: "Network request failed"
 
-**Causa:** Las rutas de API no están correctamente configuradas
-
-**Solución:**
-1. Verifica que `netlify.toml` contiene:
-   ```toml
-   [[redirects]]
-     from = "/api/*"
-     to = "/api/:splat"
-     status = 200
-   ```
-
-2. Fuerza un redeploy en Netlify
-
-### Error: "Build failed"
-
-**Causa:** Errores durante npm install o npm build
-
-**Pasos para resolver:**
-
-1. **Revisar los logs:**
-   - En Netlify: Deployments → (último deploy) → Deploy log
-   - Busca la línea que dice "Error"
-
-2. **Probar localmente:**
-   ```bash
-   # Test backend
-   cd backend-node
-   npm install
-   npm start
-   
-   # En otra terminal, test frontend
-   cd frontend
-   npm install
-   npm run build
-   ```
-
-3. **Si encuentra errores, corrígelos localmente**
-
-4. **Push a GitHub y Netlify redeploy automáticamente**
+**Causa:** El backend no es accesible desde internet
+- Verifica que está corriendo en su servidor
+- Verifica que el firewall permite acceso
+- Prueba acceder a la URL del backend desde navegador
 
 ### Error: "Mixed Content"
 
-**Causa:** Frontend (HTTPS) intenta conectar a un backend HTTP
-
-Esto no debería ocurrir con esta arquitectura unificada. Si sucede:
-1. Verifica que usas URLs relativas (`/api/*`) en lugar de absolutas
-2. Asegúrate de que Netlify sirve TODO bajo HTTPS
-
-### La aplicación carga pero los cálculos no funcionan
-
-1. **Abre la consola del navegador (F12)**
-2. **Ve a la pestaña Network**
-3. **Intenta hacer una acción que falla**
-4. **Busca solicitudes a `/api/*`**
-   - Si ves 404: El backend no está siendo encontrado
-   - Si ves 500: El backend tiene un error
-   - Si vez timeout: El backend está lento
-
-5. **Haz click en la solicitud fallida**
-6. **Ve a la pestaña "Response"**
-7. **Lee el mensaje de error**
+**Causa:** Frontend en HTTPS intenta conectar a HTTP
+- **Solución:** Backend debe usar HTTPS
+- Configura SSL/TLS en tu servidor backend
 
 ---
 
-## 📞 Ejemplo Completo de Despliegue
+## 📞 Ejemplo Completo
 
-### Paso a paso:
+### Si tu backend está en Heroku:
 
+**Paso 1:** Desploy backend en Heroku
 ```bash
-# 1. Asegurar que todo está commitido
-cd ~/Proyectos/Calculadora\ de\ nomina
-git status
-
-# 2. Si hay cambios, hacer commit
-git add .
-git commit -m "Ready for Netlify deployment"
-
-# 3. Push a GitHub
-git push origin main
+git remote add heroku https://git.heroku.com/tu-app-nomina.herokuapp.com.git
+git push heroku main
+# URL final: https://tu-app-nomina.herokuapp.com
 ```
 
-### En Netlify Dashboard:
-
-1. Ve a tu sitio en Netlify
-2. Ve a **Deployments**
-3. Deberías ver un deploy en progreso o completado
-4. Si está completado, haz click en el botón o URL para abrirlo
-5. ¡Tu aplicación está lista! 🎉
-
-### URL Final:
+**Paso 2:** En Netlify, agrega variable:
 ```
-https://tu-sitio.netlify.app
+NEXT_PUBLIC_API_BASE_URL=https://tu-app-nomina.herokuapp.com/api
 ```
+
+**Paso 3:** Redeploy en Netlify
+- Netlify → Deployments → Trigger deploy
+
+**Resultado:**
+- Frontend: https://tu-sitio.netlify.app
+- Backend: https://tu-app-nomina.herokuapp.com/api
 
 ---
 
 ## 🔐 Consideraciones de Seguridad
 
 1. **Nunca commits credenciales** en GitHub
-2. **Usa variables de entorno** para datos sensibles
-3. **CORS está configurado** para Netlify automáticamente
-4. **HTTPS está habilitado** automáticamente por Netlify
-5. **Backend valida todos los inputs**
-
----
-
-## 🎯 Próximos Pasos
-
-Después del deployment exitoso:
-
-1. **Comunicar URL a usuarios**
-   - Compartir: `https://tu-sitio.netlify.app`
-
-2. **Monitorear el uso**
-   - Analytics en Netlify dashboard
-   - Errores en la consola del navegador
-
-3. **Actualizaciones futuras**
-   - Cualquier cambio en `main` se deploya automáticamente
-   - Los logs están disponibles en Netlify
-
-4. **Agregar dominio personalizado** (opcional)
-   - Site settings → Domain management → Add custom domain
-   - Sigue las instrucciones para validar
+2. **Usa variables de entorno** para URLs sensibles
+3. **Habilita CORS solo para tu dominio** en producción
+4. **Usa HTTPS** siempre en producción
+5. **Valida inputs** en el backend
 
 ---
 
 ## 📚 Referencias
 
-- [Netlify Complete Docs](https://docs.netlify.com/)
-- [netlify.toml Reference](https://docs.netlify.com/configure-builds/file-based-configuration/)
-- [Express.js Documentation](https://expressjs.com/)
-- [Next.js Deployment](https://nextjs.org/docs/deployment/netlify)
+- [Netlify Docs](https://docs.netlify.com/)
+- [Next.js Environment Variables](https://nextjs.org/docs/basic-features/environment-variables)
+- [FastAPI CORS](https://fastapi.tiangolo.com/tutorial/cors/)
+- [Heroku CLI](https://devcenter.heroku.com/articles/heroku-cli)
 
 ---
 
 **¿Necesitas ayuda?** Contacta a tu equipo de desarrollo.
-
-Última actualización: 2024
-Arquitectura: Next.js Frontend + Node.js Express Backend en Netlify
-
