@@ -117,20 +117,25 @@ class CalculadoraNomina {
   }
 
   getDesgloseDevengados() {
-    const desglose = {};
-    
-    if (this.turnos.length > 0) {
-      desglose['Salario Básico'] = this.salario_diario * this.turnos.length;
-    }
-    
+    // Calcular cantidad de cívicas (normalmente son 2 pasajes por día, menos CP y suspensiones)
+    let civicas_cantidad = 2 * (this.turnos.length || 0);
     if (this.tiene_compensatorio) {
-      desglose['Compensatorio'] = this.salario_diario;
+      civicas_cantidad -= 1;
     }
-    
-    if (this.incapacidades > 0) {
-      desglose['Incapacidad (66.67%)'] = Math.round(this.salario_diario * 0.6667 * this.incapacidades);
+    if (this.suspensiones > 0) {
+      civicas_cantidad -= 2 * this.suspensiones;
     }
+    if (civicas_cantidad < 0) {
+      civicas_cantidad = 0;
+    }
+
+    const desglose = {
+      [`Salario Básico (${this.turnos.length || 0} días)`]: this.salario_diario * this.turnos.length,
+      [`Cívicas (${civicas_cantidad} pasajes)`]: this.totalCivicas(),
+      'Auxilio de Transporte': this.totalAuxilio()
+    };
     
+    // Agregar extras con formato
     this.extras.forEach(extra => {
       const key = extra.nombre;
       if (!desglose[key]) {
