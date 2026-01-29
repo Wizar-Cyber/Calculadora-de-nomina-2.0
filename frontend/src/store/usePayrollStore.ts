@@ -66,6 +66,7 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
   },
 
   addShift: (shift) => {
+    console.log('[addShift] Agregando shift:', shift);
     const { turnosDisponibles } = get();
     const turnoCompleto = turnosDisponibles.find(t => t.codigo === shift.codigo);
     const shiftConHoras = {
@@ -73,10 +74,18 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       inicio: (turnoCompleto?.hora_inicio || shift.inicio)?.slice(0, 5) || '',
       fin: (turnoCompleto?.hora_fin || shift.fin)?.slice(0, 5) || ''
     };
-    set((state) => ({ shifts: [...state.shifts, shiftConHoras] }));
+    console.log('[addShift] Shift con horas:', shiftConHoras);
+    set((state) => {
+      console.log('[addShift] Estado anterior - shifts:', state.shifts.length);
+      const newState = { shifts: [...state.shifts, shiftConHoras] };
+      console.log('[addShift] Estado nuevo - shifts:', newState.shifts.length);
+      return newState;
+    });
     // Usar setTimeout para asegurar que el estado se actualiza antes de calcular
     setTimeout(() => {
-      void get().calculatePayroll();
+      const currentState = get();
+      console.log('[addShift] Después de setTimeout - shifts en el state:', currentState.shifts.length);
+      void currentState.calculatePayroll();
     }, 0);
   },
 
