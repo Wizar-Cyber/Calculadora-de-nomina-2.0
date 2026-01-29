@@ -27,11 +27,18 @@ class CalculadoraNomina:
         self.detalles_desglose = []  # Para mostrar en el desglose
         self.deducciones_manuales = []
         self.dias_incapacidad = 0
+        self.dias_suspension = 0
+        self.dias_licencia = 0
         self.dias_trabajados = 15  # Por defecto 15 días de quincena
         self.recargos_agrupados = {}  # Agrupar recargos por tipo
         self.civicas_cantidad = 0
         self.civicas_valor = 0
         self.cp_agregado = False  # Bandera para rastrear si se agregó CP
+        
+        # Nuevos atributos para manejar conceptos acumulados
+        self.incapacidades_valor = 0  # Valor total de incapacidades para devengados
+        self.suspensiones_valor = 0  # Valor total de suspensiones para deducciones
+        self.licencias_valor = 0  # Valor total de licencias para deducciones
 
     def reinicializar(self, quincena=None):
         """Reinicia la calculadora a su estado inicial"""
@@ -206,25 +213,46 @@ class CalculadoraNomina:
 
     def agregar_incapacidad(self):
         """Agrega un día de incapacidad: paga al 66.67% y ajusta días trabajados."""
-        # Incapacidad: reduce días trabajados y paga al 66.67%.
+        # Incapacidad: reduce días trabajados, resta el día completo del básico y suma el 66.67% en devengados
         self.dias_incapacidad += 1
         self.dias_trabajados -= 1
-        # Ya existe el día completo dentro del básico; solo se descuenta el 33.33%.
-        self.devengado -= self.valor_dia_basico * (1 - 0.6667)
+        
+        # Restar el día completo del devengado básico
+        self.devengado -= self.valor_dia_basico
+        
+        # Agregar el 66.67% como concepto de incapacidad en devengados
+        valor_incapacidad = self.valor_dia_basico * 0.6667
+        self.incapacidades_valor += valor_incapacidad
+        
+        # Agregar el concepto a recargos agrupados para que se muestre en devengados
+        if "Incapacidad (66.67%)" not in self.recargos_agrupados:
+            self.recargos_agrupados["Incapacidad (66.67%)"] = {"valor": 0, "dias": 0}
+        self.recargos_agrupados["Incapacidad (66.67%)"]["valor"] += valor_incapacidad
+        self.recargos_agrupados["Incapacidad (66.67%)"]["dias"] = self.dias_incapacidad
 
     def agregar_suspension(self):
         """Agrega suspensión: descuenta una jornada del básico y ajusta días trabajados."""
-        # Suspensión: descuenta un día del básico.
-        # Restar 6 horas (1 día) del básico
-        self.devengado -= self.valor_dia_basico
+        # Suspensión: descuenta un día del básico y lo registra como deducción
+        self.dias_suspension += 1
         self.dias_trabajados -= 1
+        
+        # Restar del devengado
+        self.devengado -= self.valor_dia_basico
+        
+        # Acumular el valor para mostrarlo en deducciones
+        self.suspensiones_valor += self.valor_dia_basico
 
     def agregar_licencia(self):
         """Agrega licencia no remunerada: descuenta una jornada del básico."""
-        # Licencia: descuenta un día del básico.
-        # Restar 6 horas (1 día) del básico
-        self.devengado -= self.valor_dia_basico
+        # Licencia: descuenta un día del básico y lo registra como deducción
+        self.dias_licencia += 1
         self.dias_trabajados -= 1
+        
+        # Restar del devengado
+        self.devengado -= self.valor_dia_basico
+        
+        # Acumular el valor para mostrarlo en deducciones
+        self.licencias_valor += self.valor_dia_basico
 
     # ----------------------------
     # HORAS EXTRAS
@@ -245,18 +273,31 @@ class CalculadoraNomina:
         self.deducciones_manuales.append((nombre, valor))
 
     def get_deducciones_desglosadas(self):
-        """Retorna el detalle de deducciones (base + manuales) como dict concepto->valor."""
-        # Retorna deducciones base (porcentaje del devengado) + deducciones manuales.
+        """Retorna el detalle de deducciones (base + manuales + suspensiones + licencias) como dict concepto->valor."""
+        # Retorna deducciones base (porcentaje del devengado) + deducciones manuales + suspensiones + licencias.
         deducciones = {}
+        
         # Calcular porcentajes del devengado (sin cívicas ni auxilio, que no son salario)
         for concepto, porcentaje in DEDUCCIONES_BASE.items():
             valor = self.devengado * porcentaje
             deducciones[concepto] = valor
+        
+        # Agregar suspensiones si existen
+        if self.dias_suspension > 0:
+            concepto_suspension = f"Suspensión ({self.dias_suspension} día{'s' if self.dias_suspension > 1 else ''})"
+            deducciones[concepto_suspension] = self.suspensiones_valor
+        
+        # Agregar licencias si existen
+        if self.dias_licencia > 0:
+            concepto_licencia = f"Licencia ({self.dias_licencia} día{'s' if self.dias_licencia > 1 else ''})"
+            deducciones[concepto_licencia] = self.licencias_valor
+        
         # Agregar deducciones manuales
         for concepto, valor in self.deducciones_manuales:
             if concepto not in deducciones:
                 deducciones[concepto] = 0
             deducciones[concepto] += valor
+        
         return deducciones
 
     def total_deducciones(self):
@@ -283,7 +324,7 @@ class CalculadoraNomina:
         if self.tiene_cp():
             self.civicas_cantidad -= 1
         
-        # Si hay suspensión, restar 2
+        # Si hay suspensión o licencia, restar 2
         if self.tiene_suspension():
             self.civicas_cantidad -= 2
         
@@ -303,7 +344,7 @@ class CalculadoraNomina:
         # Se paga completo en quincena 30, pero se resta por cada día de suspensión/licencia/incapacidad
         if self.quincena == "30":
             valor_diario_auxilio = AUXILIO_TRANSPORTE / 30
-            dias_descuento = 15 - self.dias_trabajados + self.dias_incapacidad
+            dias_descuento = 15 - self.dias_trabajados
             auxilio = AUXILIO_TRANSPORTE - (dias_descuento * valor_diario_auxilio)
             return max(0, auxilio)  # No puede ser negativo
         return 0
