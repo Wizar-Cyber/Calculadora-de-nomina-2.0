@@ -10,6 +10,7 @@ app = FastAPI(title="Nómina API", version="1.0.0")
 # CORS para frontend
 app.add_middleware(
     CORSMiddleware,
+    # Permitir orígenes específicos y patrones
     allow_origins=[
         "http://localhost:3000", 
         "http://localhost:3001", 
@@ -17,9 +18,10 @@ app.add_middleware(
         "http://127.0.0.1:3000",
         "http://127.0.0.1:3001",
         "http://127.0.0.1:3002",
-        "https://*.netlify.app",  # Permitir cualquier sitio de Netlify
-        "https://*.vercel.app",   # Si usas Vercel en el futuro
+        "https://calculadora-de-nomina-2-0.vercel.app"
     ],
+    # Permitir patrones regex para Netlify y Vercel (subdominios dinámicos)
+    allow_origin_regex=r"https://.*\.vercel\.app|https://.*\.netlify\.app",
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
