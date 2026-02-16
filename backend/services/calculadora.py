@@ -54,7 +54,7 @@ class CalculadoraNomina:
     # CÁLCULO DE RECARGOS
     # ----------------------------
     def calcular_horas_por_franja(self, turno):
-        """Divide las horas reales del turno por franja horaria: diurna (6-21) y nocturna (21-6)"""
+        """Divide las horas reales del turno por franja horaria: diurna (6-19) y nocturna (19-6)"""
         inicio = turno.hora_inicio_obj()
         fin = turno.hora_fin_obj()
         
@@ -65,28 +65,28 @@ class CalculadoraNomina:
         horas_nocturnas = 0.0
         
         # Encontrar puntos de transición que están DENTRO del rango del turno
-        # Las transiciones son a las 06:00 y 21:00
+        # Las transiciones son a las 06:00 y 19:00
         puntos_transicion = []
         
         # Crear puntos de transición para el día del inicio
         dia_inicio = inicio.date()
         hora_06_inicio = datetime.combine(dia_inicio, datetime.min.time().replace(hour=6))
-        hora_21_inicio = datetime.combine(dia_inicio, datetime.min.time().replace(hour=21))
+        hora_19_inicio = datetime.combine(dia_inicio, datetime.min.time().replace(hour=19))
         
         if hora_06_inicio > inicio and hora_06_inicio < fin:
             puntos_transicion.append(hora_06_inicio)
-        if hora_21_inicio > inicio and hora_21_inicio < fin:
-            puntos_transicion.append(hora_21_inicio)
+        if hora_19_inicio > inicio and hora_19_inicio < fin:
+            puntos_transicion.append(hora_19_inicio)
         
         # Crear puntos de transición para el día siguiente (si el turno cruza medianoche)
         dia_siguiente = dia_inicio + timedelta(days=1)
         hora_06_siguiente = datetime.combine(dia_siguiente, datetime.min.time().replace(hour=6))
-        hora_21_siguiente = datetime.combine(dia_siguiente, datetime.min.time().replace(hour=21))
+        hora_19_siguiente = datetime.combine(dia_siguiente, datetime.min.time().replace(hour=19))
         
         if hora_06_siguiente > inicio and hora_06_siguiente < fin:
             puntos_transicion.append(hora_06_siguiente)
-        if hora_21_siguiente > inicio and hora_21_siguiente < fin:
-            puntos_transicion.append(hora_21_siguiente)
+        if hora_19_siguiente > inicio and hora_19_siguiente < fin:
+            puntos_transicion.append(hora_19_siguiente)
         
         # Ordenar puntos de transición
         puntos_transicion.sort()
@@ -107,7 +107,7 @@ class CalculadoraNomina:
             
             # Determinar si este segmento es diurno o nocturno
             # Usamos la hora del inicio del segmento
-            if tiempo_inicio.hour >= 21 or tiempo_inicio.hour < 6:
+            if tiempo_inicio.hour >= 19 or tiempo_inicio.hour < 6:
                 horas_nocturnas += horas_segmento
             else:
                 horas_diurnas += horas_segmento
@@ -115,20 +115,20 @@ class CalculadoraNomina:
         return horas_diurnas, horas_nocturnas
 
     def turno_toca_horas_nocturnas(self, turno):
-        """Verifica si el turno incluye horas entre 21:00 y 06:00"""
+        """Verifica si el turno incluye horas entre 19:00 y 06:00"""
         inicio = turno.hora_inicio_obj()
         fin = turno.hora_fin_obj()
         if fin <= inicio:
             fin += timedelta(days=1)
         
-        # Si inicia en nocturno (21-06)
-        if inicio.hour >= 21 or inicio.hour < 6:
+        # Si inicia en nocturno (19-06)
+        if inicio.hour >= 19 or inicio.hour < 6:
             return True
-        # Si termina en nocturno (después de las 21 o antes de las 6)
-        if fin.hour >= 21 or fin.hour < 6:
+        # Si termina en nocturno (después de las 19 o antes de las 6)
+        if fin.hour >= 19 or fin.hour < 6:
             return True
         # Si pasa por la medianoche
-        if inicio < fin and inicio.replace(hour=21, minute=0, second=0) < fin:
+        if inicio < fin and inicio.replace(hour=19, minute=0, second=0) < fin:
             return True
         return False
 
@@ -141,7 +141,7 @@ class CalculadoraNomina:
 
         # Festivo / dominical
         if festivo:
-            # Recargo dominical diurno (6-21): +80%
+            # Recargo dominical diurno (6-19): +80%
             if horas_diurnas > 0:
                 valor_diurno = horas_diurnas * VALOR_HORA * RECARGO_DOMINICAL_DIURNO
                 valor_total += valor_diurno
@@ -151,7 +151,7 @@ class CalculadoraNomina:
                 self.recargos_agrupados["R FESTIVO DIURN"]["valor"] += valor_diurno
                 self.recargos_agrupados["R FESTIVO DIURN"]["horas"] += horas_diurnas
             
-            # Recargo dominical nocturno (21-06): +210%
+            # Recargo dominical nocturno (19-06): +210%
             if horas_nocturnas > 0:
                 valor_nocturno = horas_nocturnas * VALOR_HORA * RECARGO_DOMINICAL_NOCTURNO
                 valor_total += valor_nocturno
