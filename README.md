@@ -1,148 +1,219 @@
-# Calculadora de Nómina - Conductores TA
+# 📊 Calculadora de Nómina - Conductores TA
 
-Sistema web moderno para cálculo de nómina de conductores con Front-end en Next.js/React y Back-end en FastAPI.
+Sistema web moderno y completo para cálculo de nómina de conductores. 
+Desarrollado con **Next.js 16** (TypeScript) + **Tailwind CSS**.
+
+> **v2.0**: Backend y frontend integrados en una única aplicación Next.js. Deploy en Netlify sin latencias.
+
+---
+
+## 🚀 Inicio Rápido
+
+```bash
+# 1. Instalar dependencias
+cd frontend && npm install
+
+# 2. Ejecutar servidor de desarrollo
+npm run dev
+
+# 3. Abrir en navegador
+# http://localhost:3000
+```
+
+---
 
 ## 🏗️ Estructura del Proyecto
 
 ```
-.
-├── backend/                    # API FastAPI (Python)
-│   ├── main.py                # Servidor principal
-│   ├── config.py              # Configuración y constantes
-│   ├── requirements.txt        # Dependencias Python
-│   ├── models/                # Modelos de datos
-│   │   └── turno.py           # Modelo Turno
-│   ├── services/              # Lógica de cálculo
-│   │   └── calculadora.py     # Motor de cálculos
-│   └── data/turnos.json       # Catálogo de turnos
+frontend/
+├── src/
+│   ├── app/                    # Páginas (App Router)
+│   │   ├── page.tsx            # Página principal
+│   │   ├── layout.tsx          # Layout global
+│   │   └── api/                # API Endpoints (Next.js)
+│   │       ├── turnos/         # GET lista de turnos
+│   │       ├── calcular/       # POST cálculo básico
+│   │       └── calcular-con-eventos/  # POST con eventos
+│   │
+│   ├── components/             # Componentes React
+│   │   ├── forms/              # Formularios
+│   │   ├── payroll/            # Visualización de nómina
+│   │   ├── tables/             # Tablas de datos
+│   │   ├── layout/             # Header, Footer, Nav
+│   │   └── ui/                 # Componentes base
+│   │
+│   ├── lib/                    # Librerías y utilidades
+│   │   ├── api.ts              # Cliente Axios
+│   │   ├── calculadora.ts      # Motor de cálculo
+│   │   ├── config.ts           # Constantes de negocio
+│   │   ├── turno.ts            # Modelo Turno
+│   │   ├── turnos-data.ts      # Catálogo de turnos
+│   │   ├── types.ts            # Interfaces TypeScript
+│   │   └── utils.ts            # Funciones utilitarias
+│   │
+│   └── store/                  # Estado global (Zustand)
+│       └── usePayrollStore.ts
 │
-├── frontend/                   # Aplicación Next.js
-│   ├── package.json
-│   ├── tsconfig.json
-│   ├── next.config.js
-│   ├── src/
-│   │   ├── app/               # Páginas (App Router)
-│   │   ├── components/        # Componentes React
-│   │   ├── lib/               # Utilidades y API
-│   │   └── store/             # Estado (Zustand)
-│   └── public/
+├── public/                     # Archivos estáticos
+│   ├── turnos.json            # Backup de datos
+│   └── test-api.js            # Script de prueba
 │
-├── turnos.json                # Catálogo de turnos
-└── README.md                  # Este archivo
+├── .env.local                  # Variables de entorno
+├── next.config.js              # Configuración Next.js
+├── tailwind.config.ts          # Configuración Tailwind
+└── package.json
 ```
 
-## 🚀 Inicio Rápido
+---
 
-### Backend (API FastAPI)
+## 💻 Características
+
+✅ **Gestión de Turnos** - Seleccionar turnos por quincena  
+✅ **Cálculo Automático** - Devengado, deducciones y neto  
+✅ **Eventos Especiales** - Suspensiones, licencias, incapacidades, extras  
+✅ **Desglose Detallado** - Visualizar cómo se calcula cada valor  
+✅ **Interfaz Moderna** - Responsive design con Tailwind CSS  
+✅ **Sin Latencias** - Deployment integrado (Netlify)
+
+---
+
+## 🔌 API Endpoints
+
+Todos bajo `/api`:
+
+### `GET /api/turnos`
+Obtiene lista de turnos disponibles.
 
 ```bash
-cd backend
-pip install -r requirements.txt
-python -m uvicorn main:app --reload --host 0.0.0.0 --port 8001
+curl http://localhost:3000/api/turnos
 ```
 
-API disponible en: `http://localhost:8001`  
-Documentación: `http://localhost:8001/docs`
-
-### Frontend (Next.js)
+### `POST /api/calcular`
+Calcula nómina básica (solo turnos).
 
 ```bash
-cd frontend
-npm install
-npm run dev
+curl -X POST http://localhost:3000/api/calcular \
+  -H "Content-Type: application/json" \
+  -d '{"quincena": "2024-01", "turnos": ["250M"]}'
 ```
 
-App disponible en: `http://localhost:3000`
+### `POST /api/calcular-con-eventos`
+Calcula nómina con eventos especiales.
 
-## 💰 Configuración de Cálculo
+```bash
+curl -X POST http://localhost:3000/api/calcular-con-eventos \
+  -H "Content-Type: application/json" \
+  -d '{
+    "quincena": "2024-01",
+    "turnos": ["250M"],
+    "eventos": [{"tipo": "extra", "minutos": 60, "recargo": 0.35}]
+  }'
+```
 
-### Salario Base
-- **Mensual**: $2,233,612 COP
-- **Quincena**: $1,116,806 COP
-- **Día**: $74,454 COP
-- **Hora**: $12,409 COP
+---
 
-### Recargos
-- **Nocturno (21:00-06:00)**: +35%
-- **Festivo Diurno (06:00-21:00)**: +80%
-- **Festivo Nocturno (21:00-06:00)**: +210%
+## 💰 Configuración de Negocio
+
+### Salario
+- **Mensual**: $2,347,526
+- **Quincena**: $1,173,763
+- **Hora**: $13,041.81
+
+### Franja Horaria
+| Franja | Horario | Recargo |
+|--------|---------|---------|
+| Diurna | 6:00-19:00 | 0% |
+| Nocturna | 19:00-6:00 | +35% |
+| Dom. Diurna | 6:00-19:00 | +80% |
+| Dom. Nocturna | 19:00-6:00 | +210% |
 
 ### Deducciones
 - **Salud**: 4% del devengado
 - **Pensión**: 4% del devengado
 
-### Eventos Especiales
+### Beneficios
+- **Cívicas**: 24 pasajes × $3,820 = $91,680/quincena
+- **Auxilio**: Proporcional a días laborados
 
-| Evento | Pago | Cívicas | Auxilio |
-|--------|------|---------|---------|
-| **Suspensión** | 0% | -2 | -$6,667 |
-| **Licencia** | 0% | Completo | -$6,667 |
-| **Incapacidad** | 66.67% | Completo | Completo |
-| **CP** | +1 día | -1 | Completo |
+---
 
-## 🔗 Endpoints Principales
+## 🔧 Archivos Clave
 
-### Turnos
-- `GET /api/turnos` - Todos los turnos
-- `GET /api/turnos/{codigo}` - Turno específico
+### **`src/lib/calculadora.ts`** (300+ líneas)
+Motor de cálculo con métodos para:
+- Calcular horas por franja (diurna/nocturna)
+- Aplicar recargos según tipo de día
+- Procesar eventos especiales
+- Calcular deducciones y beneficios
 
-### Cálculos
-- `POST /api/calcular` - Cálculo con turnos
-- `POST /api/calcular-con-eventos` - Cálculo con turnos + eventos
+### **`src/lib/config.ts`**
+Todas las constantes de negocio en un lugar centralizado.
 
-### Eventos
-- `POST /api/eventos/suspension` - Agrega suspensión
-- `POST /api/eventos/licencia` - Agrega licencia
-- `POST /api/eventos/incapacidad` - Agrega incapacidad
-- `POST /api/eventos/cp` - Agrega compensatorio
-- `POST /api/eventos/extra` - Agrega horas extras
-- `POST /api/eventos/deduccion` - Agrega deducción manual
+### **`src/lib/turnos-data.ts`**
+Catálogo de 176 turnos en formato TypeScript para rápido acceso.
 
-## 🛠️ Tecnologías
+### **`src/app/api/calcular/route.ts`**
+Endpoint que recibe turnos y retorna nómina completa.
 
-### Backend
-- FastAPI
-- Python 3.9+
-- Pydantic (validación)
+---
 
-### Frontend
-- Next.js 13+
-- React 18+
+## 📦 Deploy en Netlify
+
+Ver [DEPLOY.md](DEPLOY.md)
+
+**Resumen:**
+1. Push a GitHub
+2. Conectar en Netlify
+3. Configurar `NEXT_PUBLIC_API_BASE_URL=/api` (ya viene por defecto)
+4. Netlify detecta automáticamente Next.js y deploya
+
+---
+
+## 📚 Documentación Adicional
+
+- **[DEPLOY.md](DEPLOY.md)** - Guía detallada de deployment
+- **[GUIA_USO.md](GUIA_USO.md)** - Manual de usuario (en construcción)
+
+---
+
+## 🛠️ Stack Tecnológico
+
+**Frontend:**
+- Next.js 16.1.6 (React 19)
 - TypeScript
-- Zustand (estado)
 - Tailwind CSS
-- Axios (HTTP)
+- Zustand (state management)
+- Axios (HTTP client)
 
-## 📋 Flujo Principal
+**Backend:**
+- Next.js API Routes
+- TypeScript (lógica migrada de Python)
 
-1. Usuario selecciona quincena
-2. Agrega turnos y/o eventos
-3. Sistema calcula automáticamente:
-   - Devengados (base + recargos)
-   - Deducciones (salud + pensión)
-   - Cívicas y auxilio
-   - Neto a pagar
-4. Muestra colilla de pago detallada
+**Deployment:**
+- Netlify (recomendado)
 
-## 🔄 Sincronización
+---
 
-- ✅ Agregar turno → se recalcula con eventos existentes
-- ✅ Agregar evento → se recalcula con turnos existentes
-- ✅ Eliminar turno → se mantienen los eventos
-- ✅ Eliminar evento → se mantienen los turnos
+## 📝 Scripts Disponibles
 
-## 📧 Configuración de API
-
-En [frontend/src/lib/api.ts](frontend/src/lib/api.ts):
-
-```typescript
-const api = axios.create({
-  baseURL: 'http://localhost:8001/api',
-  headers: { 'Content-Type': 'application/json' },
-  timeout: 10000,
-});
+```bash
+npm run dev      # Servidor con hot-reload
+npm run build    # Compilar para producción  
+npm run start    # Ejecutar versión producción
+npm run lint     # Verificar código
 ```
 
-## 👤 Autor
+---
 
-Reiber
+## 🔄 Cambios Principales (v2.0)
+
+- ✅ Backend Python migrado a TypeScript
+- ✅ API integrada en Next.js API Routes
+- ✅ Sin servidor separado = sin latencias
+- ✅ Deploy único en Netlify
+- ✅ Mejor rendimiento y mantenibilidad
+
+---
+
+**Última actualización:** 24 de febrero de 2026  
+**Versión:** 2.0 (Integrada en Next.js)

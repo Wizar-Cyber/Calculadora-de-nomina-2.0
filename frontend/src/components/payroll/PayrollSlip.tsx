@@ -18,12 +18,12 @@ export function PayrollSlip({ devengado, deducciones, neto, auxilio, civicas }: 
   console.log('PayrollSlip - Received desglose:', { desgloseDevengados, desgloseDeducciones, diasTrabajados });
 
   return (
-    <div className="overflow-hidden rounded-2xl border border-white/10 shadow-xl">
-      <div className="flex flex-col border-y border-gray-200 md:flex-row">
-        <div className="flex-1 flex flex-col min-h-0">
+    <div className="overflow-hidden rounded-lg sm:rounded-2xl border border-white/10 shadow-xl">
+      <div className="flex flex-col border-y border-gray-200 sm:flex-row">
+        <div className="flex-1 flex flex-col min-h-0 border-b sm:border-b-0 sm:border-r border-gray-200">
           <DevengadosCard items={desgloseDevengados} total={devengado} diasTrabajados={diasTrabajados} />
         </div>
-        <div className="border-l border-gray-200 flex-1 flex flex-col min-h-0">
+        <div className="flex-1 flex flex-col min-h-0">
           <DeduccionesCard items={desgloseDeducciones} total={deducciones} />
         </div>
       </div>

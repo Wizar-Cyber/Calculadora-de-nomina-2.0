@@ -51,13 +51,13 @@ export default function Home() {
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
       <Header quincena={quincena} neto={neto} />
 
-      <div className="mx-auto max-w-6xl px-4 py-6 space-y-12">
+      <div className="mx-auto max-w-6xl px-3 sm:px-4 py-4 sm:py-6 space-y-8 sm:space-y-12">
         
         {/* SECCIÓN CONFIGURACIÓN */}
         <section>
-          <h2 className="mb-6 text-2xl font-bold text-white">Configuración</h2>
-          <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-            <div className="space-y-6 lg:col-span-2">
+          <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold text-white">Configuración</h2>
+          <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+            <div className="space-y-4 sm:space-y-6 lg:col-span-2">
               <QuincenaSelect />
               <ShiftInput />
             </div>
@@ -95,13 +95,13 @@ export default function Home() {
 
         {/* SECCIÓN REGISTROS */}
         <section>
-          <h2 className="mb-6 text-2xl font-bold text-white">Registros de Turnos</h2>
+          <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold text-white">Registros de Turnos</h2>
           <ShiftTable shifts={shifts} />
         </section>
 
         {/* SECCIÓN RESULTADO */}
         <section>
-          <h2 className="mb-6 text-2xl font-bold text-white">Colilla de Pago</h2>
+          <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold text-white">Colilla de Pago</h2>
           <PayrollSlip 
             devengado={devengado} 
             deducciones={deducciones} 

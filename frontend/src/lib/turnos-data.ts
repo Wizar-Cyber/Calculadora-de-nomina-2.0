@@ -1,75 +1,75 @@
+// Auto-generated data file for turnos
+// This file is used by the API routes to access turnos data
 
-
-[
-  
+const turnos = [
   {
     "codigo": "250M",
     "descripcion": "Turno 250M",
-    "hora_inicio": "3:10",
-    "hora_fin": "9:10",
+    "hora_inicio": "03:10",
+    "hora_fin": "09:10",
     "descanso": [],
     "festivo": false
   },
   {
     "codigo": "251M",
     "descripcion": "Turno 251M",
-    "hora_inicio": "3:20",
-    "hora_fin": "8:55",
+    "hora_inicio": "03:20",
+    "hora_fin": "08:55",
     "descanso": [],
     "festivo": false
   },
   {
     "codigo": "252M",
     "descripcion": "Turno 252M",
-    "hora_inicio": "3:20",
-    "hora_fin": "9:50",
+    "hora_inicio": "03:20",
+    "hora_fin": "09:50",
     "descanso": [],
     "festivo": false
   },
   {
     "codigo": "253M",
     "descripcion": "Turno 253M",
-    "hora_inicio": "3:30",
-    "hora_fin": "9:05",
+    "hora_inicio": "03:30",
+    "hora_fin": "09:05",
     "descanso": [],
     "festivo": false
   },
   {
     "codigo": "254M",
     "descripcion": "Turno 254M",
-    "hora_inicio": "3:40",
-    "hora_fin": "9:15",
+    "hora_inicio": "03:40",
+    "hora_fin": "09:15",
     "descanso": [],
     "festivo": false
   },
   {
     "codigo": "255M",
     "descripcion": "Turno 255M",
-    "hora_inicio": "3:52",
-    "hora_fin": "9:27",
+    "hora_inicio": "03:52",
+    "hora_fin": "09:27",
     "descanso": [],
     "festivo": false
   },
   {
     "codigo": "256M",
     "descripcion": "Turno 256M",
-    "hora_inicio": "3:59",
-    "hora_fin": "9:34",
+    "hora_inicio": "03:59",
+    "hora_fin": "09:34",
     "descanso": [],
     "festivo": false
   },
   {
     "codigo": "257M",
     "descripcion": "Turno 257M",
-    "hora_inicio": "4:06",
-    "hora_fin": "9:41",
+    "hora_inicio": "04:06",
+    "hora_fin": "09:41",
     "descanso": [],
     "festivo": false
   },
   {
     "codigo": "258M",
     "descripcion": "Turno 258M",
-    "hora_inicio": "4:13",
+    "hora_inicio": "04:13",
     "hora_fin": "10:34",
     "descanso": [],
     "festivo": false
@@ -77,7 +77,7 @@
   {
     "codigo": "259M",
     "descripcion": "Turno 259M",
-    "hora_inicio": "4:23",
+    "hora_inicio": "04:23",
     "hora_fin": "10:43",
     "descanso": [],
     "festivo": false
@@ -85,7 +85,7 @@
   {
     "codigo": "260M",
     "descripcion": "Turno 260M",
-    "hora_inicio": "4:31",
+    "hora_inicio": "04:31",
     "hora_fin": "11:00",
     "descanso": [],
     "festivo": false
@@ -93,7 +93,7 @@
   {
     "codigo": "261M",
     "descripcion": "Turno 261M",
-    "hora_inicio": "5:15",
+    "hora_inicio": "05:15",
     "hora_fin": "11:40",
     "descanso": [],
     "festivo": false
@@ -101,7 +101,7 @@
   {
     "codigo": "262M",
     "descripcion": "Turno 262M",
-    "hora_inicio": "5:25",
+    "hora_inicio": "05:25",
     "hora_fin": "11:46",
     "descanso": [],
     "festivo": false
@@ -117,7 +117,7 @@
   {
     "codigo": "ACTIVID",
     "descripcion": "ACTIVID",
-    "hora_inicio": "7:00",
+    "hora_inicio": "07:00",
     "hora_fin": "13:30",
     "descanso": [],
     "festivo": false
@@ -125,7 +125,7 @@
   {
     "codigo": "263M",
     "descripcion": "Turno 263M",
-    "hora_inicio": "8:35",
+    "hora_inicio": "08:35",
     "hora_fin": "14:10",
     "descanso": [],
     "festivo": false
@@ -133,7 +133,7 @@
   {
     "codigo": "264M",
     "descripcion": "Turno 264M",
-    "hora_inicio": "9:00",
+    "hora_inicio": "09:00",
     "hora_fin": "14:35",
     "descanso": [],
     "festivo": false
@@ -141,7 +141,7 @@
   {
     "codigo": "265M",
     "descripcion": "Turno 265M",
-    "hora_inicio": "9:50",
+    "hora_inicio": "09:50",
     "hora_fin": "16:20",
     "descanso": [],
     "festivo": false
@@ -855,6 +855,6 @@
     "descanso": [],
     "festivo": true
   }
+];
 
-
-]
+export default turnos;

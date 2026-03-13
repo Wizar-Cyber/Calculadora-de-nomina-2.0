@@ -57,24 +57,24 @@ export function DevengadosCard({ items, total, diasTrabajados }: DevengadosCardP
   console.log('DevengadosCard items:', items, 'total:', total);
   
   return (
-    <div className="bg-white p-6 text-slate-800 flex flex-col flex-grow min-h-0">
-      <div className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
-          <TrendingUp className="h-4 w-4" />
+    <div className="bg-white p-3 sm:p-6 text-slate-800 flex flex-col flex-grow min-h-0">
+      <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold uppercase tracking-wider">
+        <span className="flex h-7 w-7 sm:h-8 sm:w-8 items-center justify-center rounded-full bg-emerald-100 text-emerald-600 flex-shrink-0">
+          <TrendingUp className="h-3 w-3 sm:h-4 sm:w-4" />
         </span>
-        Devengados
+        <span className="truncate">Devengados</span>
       </div>
-      <div className="mt-4 space-y-2 text-sm flex-grow">
+      <div className="mt-2 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm flex-grow">
         {Object.entries(items).map(([label, value]) => (
-          <div key={label} className="flex items-center justify-between">
-            <span className="text-slate-600">{formatConceptLabel(label, value, diasTrabajados)}</span>
-            <span className="font-semibold text-slate-900">{formatCurrencyValue(value)}</span>
+          <div key={label} className="flex items-center justify-between gap-2">
+            <span className="text-slate-600 truncate">{formatConceptLabel(label, value, diasTrabajados)}</span>
+            <span className="font-semibold text-slate-900 flex-shrink-0 text-right">{formatCurrencyValue(value)}</span>
           </div>
         ))}
       </div>
-      <div className="mt-4 flex items-center justify-between border-t-2 border-emerald-500 pt-4 text-sm font-semibold">
-        <span>Total Devengado</span>
-        <span>{formatCurrency(total)}</span>
+      <div className="mt-2 sm:mt-4 flex items-center justify-between border-t-2 border-emerald-500 pt-2 sm:pt-4 text-xs sm:text-sm font-semibold">
+        <span className="truncate">Total Devengado</span>
+        <span className="flex-shrink-0 text-right">{formatCurrency(total)}</span>
       </div>
     </div>
   );
