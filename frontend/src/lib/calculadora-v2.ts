@@ -431,11 +431,19 @@ export class PayrollCalculator {
       desgloseDevengados[`Incapacidad (${diasText} al 66.67%)`] = valorIncapacidad;
     }
 
-    // Horas extras con formato horas
+    // Horas extras con formato unificado: "X.XXh | $valor"
+    const extrasAgrupadas: Record<string, { horas: number; valorCentavos: number }> = {};
     for (const extra of this.extras) {
-      const key = `${extra.nombre} (${extra.horas.toFixed(2)}h)`;
-      const currentVal = desgloseDevengados[key];
-      desgloseDevengados[key] = (typeof currentVal === 'number' ? currentVal : 0) + centavosToPesos(extra.valorCentavos);
+      if (!extrasAgrupadas[extra.nombre]) {
+        extrasAgrupadas[extra.nombre] = { horas: 0, valorCentavos: 0 };
+      }
+      extrasAgrupadas[extra.nombre].horas += extra.horas;
+      extrasAgrupadas[extra.nombre].valorCentavos += extra.valorCentavos;
+    }
+
+    for (const [nombre, data] of Object.entries(extrasAgrupadas)) {
+      const valorPesos = centavosToPesos(data.valorCentavos);
+      desgloseDevengados[nombre] = `${data.horas.toFixed(2)}h | $${valorPesos.toLocaleString('es-CO', { maximumFractionDigits: 0 })}`;
     }
 
     // === Desglose Deducciones ===

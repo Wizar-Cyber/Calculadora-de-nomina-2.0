@@ -371,10 +371,20 @@ export class CalculadoraNomina {
       desglose[`Incapacidad (${diasText} al 66.67%)`] = valorIncapacidad;
     }
 
-    // Agregar horas extras al desglose
+    // Agregar horas extras al desglose con formato unificado: "X.XXh | $valor"
+    const extrasAgrupadas: Record<string, { horas: number; valor: number }> = {};
     for (const [nombre, horas, valor] of this.detalles_desglose) {
-      const key = `${nombre} (${(horas as number).toFixed(2)}h)`;
-      desglose[key] = (desglose[key] || 0) + valor;
+      if (!extrasAgrupadas[nombre as string]) {
+        extrasAgrupadas[nombre as string] = { horas: 0, valor: 0 };
+      }
+      extrasAgrupadas[nombre as string].horas += horas as number;
+      extrasAgrupadas[nombre as string].valor += valor as number;
+    }
+
+    for (const [nombre, data] of Object.entries(extrasAgrupadas)) {
+      desglose[nombre] = `${data.horas.toFixed(2)}h | $${data.valor.toLocaleString('es-CO', {
+        maximumFractionDigits: 0,
+      })}`;
     }
 
     return desglose;
