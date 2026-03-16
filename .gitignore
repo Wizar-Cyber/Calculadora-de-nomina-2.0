@@ -5,3 +5,4 @@ frontend/.next/
 frontend/out/
 frontend/.env.local
 frontend/.vercel/
+/package-lock.json

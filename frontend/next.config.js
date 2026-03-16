@@ -7,11 +7,16 @@
  * - Middleware
  * 
  * Todas nuestras rutas de cálculo (/api/turnos, /api/calcular, etc.)
- * requieren un servidor Node.js activo (que proporciona Netlify automáticamente).
+ * requieren un runtime de servidor (Vercel lo provee automáticamente).
  */
+const path = require('node:path');
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+
+  // Evita warning cuando hay lockfiles en raíz + frontend.
+  outputFileTracingRoot: path.join(__dirname, '..'),
   
   // ⚠️ DESHABILITADO: output: 'export' previene API Routes dinámicas
   // Si lo necesitaras, tendrías que usar static generation o ISR

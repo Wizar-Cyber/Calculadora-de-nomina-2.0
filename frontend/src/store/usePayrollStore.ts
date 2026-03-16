@@ -1,14 +1,29 @@
 import { create } from 'zustand';
 import type { Shift, Turno } from '@/lib/types';
 import { calcularNomina, calcularNominaConEventos, fetchTurnos } from '@/lib/api';
+import type { Evento as EventoApi } from '@/lib/api';
 
 let payrollRequestSequence = 0;
+
+type PayrollEvento = {
+  tipo: string;
+  codigo: string;
+  inicio: string;
+  fin: string;
+  detalles: string;
+};
+
+type EventoAgrupable = 'suspension' | 'licencia' | 'incapacidad' | 'cp';
+
+const isEventoAgrupable = (tipo: string): tipo is EventoAgrupable => {
+  return tipo === 'suspension' || tipo === 'licencia' || tipo === 'incapacidad' || tipo === 'cp';
+};
 
 interface PayrollState {
   quincena: string;
   shifts: Shift[];
   turnosDisponibles: Turno[];
-  eventos: Array<{ tipo: string; codigo: string; inicio: string; fin: string; detalles: string }>;
+  eventos: PayrollEvento[];
   extras: Array<{ minutos: number; recargo: number; nombre: string }>;
   deduccionesManuals: Array<{ nombre: string; valor: number }>;
   devengado: number;
@@ -37,7 +52,7 @@ interface PayrollState {
   addLicencia: () => Promise<void>;
   addIncapacidad: () => Promise<void>;
   addDispo: (data: { inicio: string; fin: string; festivo: boolean }) => Promise<void>;
-  addEvento: (evento: { tipo: string; codigo: string; inicio: string; fin: string; detalles: string }) => void;
+  addEvento: (evento: PayrollEvento) => void;
   removeEvento: (index: number) => void;
   resetPayroll: () => Promise<void>;
 }
@@ -83,20 +98,14 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       fin: (turnoCompleto?.hora_fin || shift.fin)?.slice(0, 5) || ''
     };
     set((state) => ({ shifts: [...state.shifts, shiftConHoras] }));
-    // Usar setTimeout para asegurar que el estado se actualice antes de calcular
-    setTimeout(() => {
-      void get().calculatePayroll();
-    }, 0);
+    void get().calculatePayroll();
   },
 
   removeShift: (index) => {
     set((state) => ({
       shifts: state.shifts.filter((_, i) => i !== index),
     }));
-    // Usar setTimeout para asegurar que el estado se actualice antes de calcular
-    setTimeout(() => {
-      void get().calculatePayroll();
-    }, 0);
+    void get().calculatePayroll();
   },
 
   clearAll: () =>
@@ -159,14 +168,14 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       // Construir eventos para backend:
       // - Algunos se pueden agrupar por cantidad (suspensión/licencia/incapacidad/cp)
       // - Otros requieren datos detallados por registro (dispo)
-      const eventosAgrupados: Record<string, number> = {
+      const eventosAgrupados: Record<EventoAgrupable, number> = {
         suspension: 0,
         licencia: 0,
         incapacidad: 0,
         cp: 0,
       };
 
-      const eventosDetalle: any[] = [];
+      const eventosDetalle: EventoApi[] = [];
 
       eventos.forEach((e) => {
         const tipoNormalizado =
@@ -194,16 +203,16 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
           return;
         }
 
-        if (tipoNormalizado in eventosAgrupados) {
+        if (isEventoAgrupable(tipoNormalizado)) {
           eventosAgrupados[tipoNormalizado] = (eventosAgrupados[tipoNormalizado] || 0) + 1;
         }
       });
 
       // Construir lista de eventos para backend incluyendo extras y deducciones
-      const eventosParaBackend: any[] = [
+      const eventosParaBackend: EventoApi[] = [
         ...Object.entries(eventosAgrupados)
           .filter(([, cantidad]) => cantidad > 0)
-          .map(([tipo, cantidad]) => ({ tipo, cantidad })),
+          .map(([tipo, cantidad]) => ({ tipo: tipo as EventoAgrupable, cantidad })),
         ...eventosDetalle,
       ];
       

@@ -8,10 +8,21 @@ import {
   Wallet,
   Ticket,
 } from 'lucide-react';
+import type { ComponentType } from 'react';
 
 import { Button } from '@/components/ui/button';
 
-const actions = [
+export type PayrollAction =
+  | 'Cívicas'
+  | 'CP'
+  | 'Susp/Lic'
+  | 'Incapacidad'
+  | 'Dispo'
+  | 'Extras'
+  | 'Deducción'
+  | 'Reset';
+
+const actions: Array<{ label: PayrollAction; icon: ComponentType<{ className?: string }> }> = [
   { label: 'Cívicas', icon: Ticket },
   { label: 'CP', icon: Briefcase },
   { label: 'Susp/Lic', icon: AlertTriangle },
@@ -23,7 +34,7 @@ const actions = [
 ];
 
 interface ActionButtonsProps {
-  onAction?: (action: string) => void;
+  onAction?: (action: PayrollAction) => void;
 }
 
 export function ActionButtons({ onAction }: ActionButtonsProps) {

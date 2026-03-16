@@ -19,7 +19,7 @@ import type { PayrollResponse, Turno } from './types';
  * Interfaz para eventos especiales en el cálculo de nómina.
  * Soporta: suspensiones, licencias, incapacidades, CP, horas extras, deducciones manuales, disponible.
  */
-interface Evento {
+export interface Evento {
   tipo: string;              // Tipo: "suspension", "licencia", "incapacidad", "cp", "dispo", "extra", "deduccion"
   cantidad?: number;         // Cantidad de días (suspension, licencia, incapacidad)
   minutos?: number;          // Minutos trabajados (extra)

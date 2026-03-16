@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import { Header } from '@/components/layout/Header';
 import { ShiftInput } from '@/components/forms/ShiftInput';
 import { ActionButtons } from '@/components/forms/ActionButtons';
+import type { PayrollAction } from '@/components/forms/ActionButtons';
 import { ShiftTable } from '@/components/tables/ShiftTable';
 import { PayrollSlip } from '@/components/payroll/PayrollSlip';
 import { QuincenaSelect } from '@/components/forms/QuincenaSelect';
@@ -60,7 +61,7 @@ export default function Home() {
             </div>
             <div>
               <ActionButtons
-                onAction={async (action) => {
+                onAction={async (action: PayrollAction) => {
                   if (action === 'Extras') setModalType('extras');
                   if (action === 'Deducción') setModalType('deduccion');
                   if (action === 'Cívicas') setCivicasModalOpen(true);

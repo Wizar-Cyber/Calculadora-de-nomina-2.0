@@ -13,6 +13,9 @@ interface NetoCardProps {
 
 export function NetoCard({ neto, dias, horas, fechaPago, devengado, deducciones, auxilio, civicas }: NetoCardProps) {
   const totalDevengado = devengado + auxilio + civicas;
+  const totalBase = totalDevengado + deducciones;
+  const porcentajeDevengado = totalBase > 0 ? (totalDevengado / totalBase) * 100 : 0;
+  const porcentajeDeducciones = totalBase > 0 ? (deducciones / totalBase) * 100 : 0;
   
   return (
     <div className="bg-gradient-to-r from-blue-900 to-blue-800 px-3 sm:px-6 md:px-8 py-3 sm:py-5 md:py-6 text-center text-white">
@@ -35,11 +38,11 @@ export function NetoCard({ neto, dias, horas, fechaPago, devengado, deducciones,
           <div className="h-full flex">
             <div 
               className="bg-emerald-400" 
-              style={{ width: `${(totalDevengado / (totalDevengado + deducciones)) * 100}%` }}
+              style={{ width: `${porcentajeDevengado}%` }}
             />
             <div 
               className="bg-red-400" 
-              style={{ width: `${(deducciones / (totalDevengado + deducciones)) * 100}%` }}
+              style={{ width: `${porcentajeDeducciones}%` }}
             />
           </div>
         </div>
