@@ -163,12 +163,9 @@ describe('Procesador de Eventos', () => {
     expect(valor).toBeLessThan(0);
   });
 
-  it('calcula CP (jornada completa)', () => {
+  it('CP no afecta cálculo (valor neutro)', () => {
     const valor = eventosProc.procesarCP();
-    const pesos = centavosToPesos(valor);
-
-    const esperado = 13041.81 * 6; // VALOR_HORA * HORAS_JORNADA
-    expect(pesos).toBeCloseTo(esperado, 0);
+    expect(valor).toBe(0);
   });
 });
 
@@ -211,17 +208,22 @@ describe('Calculadora General de Nómina', () => {
     expect(resultado.neto).toBeGreaterThan(0);
   });
 
-  it('calcula nómina con eventos', () => {
+  it('CP no altera días ni total devengado', () => {
+    const base = calc.obtenerResultado(0, 0);
+
     // Agregar 2 días de incapacidad
     calc.agregarIncapacidad(2);
+    const despuesIncapacidad = calc.obtenerResultado(0, 0);
 
     // Agregar CP
     calc.agregarCP();
+    const despuesCP = calc.obtenerResultado(0, 0);
 
-    const resultado = calc.obtenerResultado(0, 0);
-
-    expect(resultado.devengado).toBeGreaterThan(0);
-    expect(resultado.dias_trabajados).toBeLessThan(15);
+    expect(base.dias_trabajados).toBe(15);
+    expect(despuesIncapacidad.dias_trabajados).toBe(13);
+    expect(despuesCP.dias_trabajados).toBe(13);
+    expect(despuesCP.devengado).toBe(despuesIncapacidad.devengado);
+    expect(Object.keys(despuesCP.desglose_devengados).some((k) => k.includes('Compensatorio'))).toBe(false);
   });
 
   it('neto = devengado + civicas - deducciones', () => {

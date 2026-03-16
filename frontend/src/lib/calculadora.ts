@@ -263,12 +263,11 @@ export class CalculadoraNomina {
   }
 
   /**
-   * Agrega un compensatorio (CP): suma una jornada completa al devengado.
+   * Agrega un compensatorio (CP): sin impacto en el cálculo de nómina.
    */
   agregarCp(): void {
-    const valor = HORAS_JORNADA * VALOR_HORA;
-    this.devengado += valor;
-    this.cp_agregado = true;
+    // Intencionalmente no-op.
+    // CP no debe afectar días, devengado ni colilla.
   }
 
   /**
@@ -335,9 +334,6 @@ export class CalculadoraNomina {
   getDesgloseDevengados(): Record<string, any> {
     // Calcular cantidad de cívicas para la etiqueta
     let civicasCantidad = PASAJES_CIVICA_CANTIDAD;
-    if (this.tieneCp()) {
-      civicasCantidad -= 1;
-    }
     if (this.tieneSuspension()) {
       civicasCantidad -= 2;
     }
@@ -421,7 +417,7 @@ export class CalculadoraNomina {
   }
 
   /**
-   * Indica si se agregó CP (impacta el cálculo de cívicas).
+   * Indica si se agregó CP.
    */
   tieneCp(): boolean {
     return this.cp_agregado;
@@ -435,14 +431,10 @@ export class CalculadoraNomina {
   }
 
   /**
-   * Calcula cantidad y valor de cívicas según CP y suspensión/licencia.
+   * Calcula cantidad y valor de cívicas según suspensión/licencia.
    */
   calcularCivicas(): void {
     this.civicas_cantidad = PASAJES_CIVICA_CANTIDAD;
-
-    if (this.tieneCp()) {
-      this.civicas_cantidad -= 1;
-    }
 
     if (this.tieneSuspension()) {
       this.civicas_cantidad -= 2;

@@ -124,8 +124,14 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
   },
 
   addDeduccion: async (nombre, valor) => {
+    const nombreLimpio = (nombre || '').trim();
+    const valorNumerico = Number(valor);
+    if (!nombreLimpio || !Number.isFinite(valorNumerico) || valorNumerico <= 0) {
+      throw new Error('Deducción manual inválida');
+    }
+
     set((state) => ({
-      deduccionesManuals: [...state.deduccionesManuals, { nombre, valor }],
+      deduccionesManuals: [...state.deduccionesManuals, { nombre: nombreLimpio, valor: valorNumerico }],
     }));
     await get().calculatePayroll();
   },
@@ -150,23 +156,56 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
     const requestId = ++payrollRequestSequence;
 
     try {
-      // Construir lista de eventos incluyendo los que vienen del estado
-      const eventosAgrupados: Record<string, number> = {};
-      eventos.forEach(e => {
-        const tipo = e.tipo === 'Suspensión' || e.tipo === 'Susp/Lic' ? 'suspension' : 
-                     e.tipo === 'Licencia' ? 'licencia' :
-                     e.tipo === 'Incapacidad' ? 'incapacidad' :
-                     e.tipo === 'CP' ? 'cp' :
-                     e.tipo === 'DISPO' || e.tipo === 'Dispo' ? 'dispo' :
-                     e.tipo.toLowerCase();
-        eventosAgrupados[tipo] = (eventosAgrupados[tipo] || 0) + 1;
+      // Construir eventos para backend:
+      // - Algunos se pueden agrupar por cantidad (suspensión/licencia/incapacidad/cp)
+      // - Otros requieren datos detallados por registro (dispo)
+      const eventosAgrupados: Record<string, number> = {
+        suspension: 0,
+        licencia: 0,
+        incapacidad: 0,
+        cp: 0,
+      };
+
+      const eventosDetalle: any[] = [];
+
+      eventos.forEach((e) => {
+        const tipoNormalizado =
+          e.tipo === 'Suspensión' || e.tipo === 'Susp/Lic'
+            ? 'suspension'
+            : e.tipo === 'Licencia'
+              ? 'licencia'
+              : e.tipo === 'Incapacidad'
+                ? 'incapacidad'
+                : e.tipo === 'CP'
+                  ? 'cp'
+                  : e.tipo === 'DISPO' || e.tipo === 'Dispo'
+                    ? 'dispo'
+                    : e.tipo.toLowerCase();
+
+        if (tipoNormalizado === 'dispo') {
+          if (e.inicio && e.fin) {
+            eventosDetalle.push({
+              tipo: 'dispo',
+              inicio: e.inicio,
+              fin: e.fin,
+              festivo: (e.detalles || '').toLowerCase().includes('festivo'),
+            });
+          }
+          return;
+        }
+
+        if (tipoNormalizado in eventosAgrupados) {
+          eventosAgrupados[tipoNormalizado] = (eventosAgrupados[tipoNormalizado] || 0) + 1;
+        }
       });
-      
-      // Construir lista de eventos para el backend incluyendo extras y deducciones
-      const eventosParaBackend: any[] = Object.entries(eventosAgrupados).map(([tipo, cantidad]) => ({
-        tipo,
-        cantidad
-      }));
+
+      // Construir lista de eventos para backend incluyendo extras y deducciones
+      const eventosParaBackend: any[] = [
+        ...Object.entries(eventosAgrupados)
+          .filter(([, cantidad]) => cantidad > 0)
+          .map(([tipo, cantidad]) => ({ tipo, cantidad })),
+        ...eventosDetalle,
+      ];
       
       // Agregar extras
       extras.forEach(extra => {
@@ -179,11 +218,14 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       });
       
       // Agregar deducciones
-      deduccionesManuals.forEach(deduccion => {
+      deduccionesManuals.forEach((deduccion) => {
+        const nombre = (deduccion.nombre || '').trim();
+        const valor = Number(deduccion.valor);
+        if (!nombre || !Number.isFinite(valor) || valor <= 0) return;
         eventosParaBackend.push({
           tipo: 'deduccion',
-          nombre: deduccion.nombre,
-          valor: deduccion.valor,
+          nombre,
+          valor,
         });
       });
       

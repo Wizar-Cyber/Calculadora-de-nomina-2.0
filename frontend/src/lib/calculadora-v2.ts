@@ -10,7 +10,6 @@
 
 import {
   SALARIO_QUINCENA,
-  HORAS_JORNADA,
   VALOR_HORA,
   VALOR_MINUTO,
   AUXILIO_TRANSPORTE,
@@ -203,12 +202,10 @@ export class DeduccionesCalculator {
  */
 export class EventosProcessor {
   private readonly VALOR_DIA_BASICO_CENTAVOS: number;
-  private readonly VALOR_HORA_BASICO_CENTAVOS: number;
 
   constructor() {
     const valorDiaBasico = SALARIO_QUINCENA / 15;
     this.VALOR_DIA_BASICO_CENTAVOS = pesosToCentavos(valorDiaBasico);
-    this.VALOR_HORA_BASICO_CENTAVOS = pesosToCentavos(VALOR_HORA);
   }
 
   /**
@@ -243,10 +240,12 @@ export class EventosProcessor {
   }
 
   /**
-   * Procesa compensatorio: suma una jornada completa
+   * Procesa compensatorio: sin impacto en cálculo de nómina.
+   *
+   * Nota: El botón de CP se usa para lógica externa de cívicas/UI.
    */
   procesarCP(): number {
-    return multiplicarCentavos(this.VALOR_HORA_BASICO_CENTAVOS, HORAS_JORNADA);
+    return 0;
   }
 
   /**
@@ -277,17 +276,13 @@ export class PayrollCalculator {
   private diasIncapacidad: number = 0;
   private diasSuspension: number = 0;
   private diasLicencia: number = 0;
-  private cpAgregado: boolean = false;
 
   private readonly VALOR_DIA_BASICO_CENTAVOS: number;
-  private readonly VALOR_HORA_CENTAVOS: number;
-
   constructor(quincena: string = '30') {
     this.recargosCalculator = new RecargosCalculator();
     this.deduccionesCalculator = new DeduccionesCalculator();
     this.quincena = quincena;
     this.VALOR_DIA_BASICO_CENTAVOS = pesosToCentavos(SALARIO_QUINCENA / 15);
-    this.VALOR_HORA_CENTAVOS = pesosToCentavos(VALOR_HORA);
     this.devengadoCentavos = pesosToCentavos(SALARIO_QUINCENA);
   }
 
@@ -342,12 +337,11 @@ export class PayrollCalculator {
   }
 
   /**
-   * Compensatorio: suma una jornada completa al devengado
+   * Compensatorio: sin impacto en devengado ni días.
    */
   agregarCP(): void {
-    const valorCentavos = multiplicarCentavos(this.VALOR_HORA_CENTAVOS, HORAS_JORNADA);
-    this.devengadoCentavos += valorCentavos;
-    this.cpAgregado = true;
+    // Intencionalmente no-op.
+    // El evento CP no debe afectar colilla, devengado ni días trabajados.
   }
 
   /**
@@ -435,11 +429,6 @@ export class PayrollCalculator {
       const diasText = `${this.diasIncapacidad} día${this.diasIncapacidad > 1 ? 's' : ''}`;
       const valorIncapacidad = Math.round(this.diasIncapacidad * valorDiaBasico * 0.6667 * 100) / 100;
       desgloseDevengados[`Incapacidad (${diasText} al 66.67%)`] = valorIncapacidad;
-    }
-
-    // Compensatorio
-    if (this.cpAgregado) {
-      desgloseDevengados['Compensatorio'] = HORAS_JORNADA * VALOR_HORA;
     }
 
     // Horas extras con formato horas
