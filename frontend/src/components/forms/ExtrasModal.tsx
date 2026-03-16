@@ -27,10 +27,10 @@ interface ExtrasModalProps {
 }
 
 const RECARGOS = [
-  { label: 'Extra Diurna (25%)', value: '0.25' },
-  { label: 'Extra Nocturna (75%)', value: '0.75' },
-  { label: 'Extra Diurna Festiva (105%)', value: '1.05' },
-  { label: 'Extra Nocturna Festiva (155%)', value: '1.55' },
+  { label: 'Extra Diurna (125% = base + 25%)', value: '1.25' },
+  { label: 'Extra Nocturna (175% = base + 75%)', value: '1.75' },
+  { label: 'Extra Diurna Festiva (205% = base + 105%)', value: '2.05' },
+  { label: 'Extra Nocturna Festiva (255% = base + 155%)', value: '2.55' },
 ];
 
 const extrasSchema = z.object({

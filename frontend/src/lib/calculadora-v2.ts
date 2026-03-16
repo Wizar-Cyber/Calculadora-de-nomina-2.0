@@ -253,7 +253,8 @@ export class EventosProcessor {
    */
   procesarExtra(minutos: number, porcentajeRecargo: number): number {
     const baseCentavos = multiplicarCentavos(pesosToCentavos(VALOR_MINUTO), minutos);
-    return Math.round(baseCentavos * (1 + porcentajeRecargo / 100));
+    const factor = normalizarFactorExtra(porcentajeRecargo);
+    return Math.round(baseCentavos * factor);
   }
 }
 
@@ -349,7 +350,8 @@ export class PayrollCalculator {
    */
   agregarExtra(minutos: number, recargo: number, nombre: string): void {
     const baseCentavos = multiplicarCentavos(pesosToCentavos(VALOR_MINUTO), minutos);
-    const valorCentavos = Math.round(baseCentavos * recargo);
+    const factor = normalizarFactorExtra(recargo);
+    const valorCentavos = Math.round(baseCentavos * factor);
     this.devengadoCentavos += valorCentavos;
     this.extras.push({ nombre, horas: minutos / 60, valorCentavos });
   }
@@ -490,4 +492,28 @@ export class PayrollCalculator {
  */
 function calculateValorHorasCentavos(horas: number, valorHoraCentavos: number): number {
   return calcularValorHoras(horas, valorHoraCentavos);
+}
+
+/**
+ * Normaliza el recargo de extra a factor multiplicador sobre la base.
+ *
+ * Soporta:
+ * - Factor directo (nuevo): 1.25, 1.75, 2.05, 2.55
+ * - Decimal recargo (legacy): 0.25, 0.75, 1.05, 1.55
+ * - Porcentaje entero: 25, 75, 105, 155
+ */
+function normalizarFactorExtra(recargo: number): number {
+  const r = Number(recargo);
+  if (!Number.isFinite(r)) return 1;
+
+  // Ej: 0.25 -> 1.25
+  if (r >= 0 && r < 1) return 1 + r;
+
+  // Ej: 1.25, 1.75, 2.05
+  if (r >= 1 && r <= 3) return r;
+
+  // Ej: 25 -> 1.25
+  if (r > 3) return 1 + r / 100;
+
+  return 1;
 }
