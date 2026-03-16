@@ -1,219 +1,153 @@
 # 📊 Calculadora de Nómina - Conductores TA
 
-Sistema web moderno y completo para cálculo de nómina de conductores. 
-Desarrollado con **Next.js 16** (TypeScript) + **Tailwind CSS**.
+Aplicación web para cálculo de nómina por quincena, con API integrada y desglose detallado de devengados/deducciones.
 
-> **v2.0**: Backend y frontend integrados en una única aplicación Next.js. Deploy en Netlify sin latencias.
+Desarrollado con **Next.js 15** + **TypeScript** + **Tailwind CSS**.
 
 ---
 
-## 🚀 Inicio Rápido
+## 🚀 Inicio rápido
 
 ```bash
-# 1. Instalar dependencias
-cd frontend && npm install
+# 1) Instalar dependencias
+cd frontend
+npm install
 
-# 2. Ejecutar servidor de desarrollo
+# 2) Desarrollo
 npm run dev
 
-# 3. Abrir en navegador
-# http://localhost:3000
+# 3) Build de producción
+npm run build
 ```
+
+Abrir en: `http://localhost:3000`
 
 ---
 
-## 🏗️ Estructura del Proyecto
+## 🏗️ Estructura (resumen)
 
 ```
 frontend/
 ├── src/
-│   ├── app/                    # Páginas (App Router)
-│   │   ├── page.tsx            # Página principal
-│   │   ├── layout.tsx          # Layout global
-│   │   └── api/                # API Endpoints (Next.js)
-│   │       ├── turnos/         # GET lista de turnos
-│   │       ├── calcular/       # POST cálculo básico
-│   │       └── calcular-con-eventos/  # POST con eventos
-│   │
-│   ├── components/             # Componentes React
-│   │   ├── forms/              # Formularios
-│   │   ├── payroll/            # Visualización de nómina
-│   │   ├── tables/             # Tablas de datos
-│   │   ├── layout/             # Header, Footer, Nav
-│   │   └── ui/                 # Componentes base
-│   │
-│   ├── lib/                    # Librerías y utilidades
-│   │   ├── api.ts              # Cliente Axios
-│   │   ├── calculadora.ts      # Motor de cálculo
-│   │   ├── config.ts           # Constantes de negocio
-│   │   ├── turno.ts            # Modelo Turno
-│   │   ├── turnos-data.ts      # Catálogo de turnos
-│   │   ├── types.ts            # Interfaces TypeScript
-│   │   └── utils.ts            # Funciones utilitarias
-│   │
-│   └── store/                  # Estado global (Zustand)
+│   ├── app/
+│   │   └── api/
+│   │       └── v1/
+│   │           ├── turnos/
+│   │           ├── calcular/
+│   │           └── calcular-con-eventos/
+│   ├── components/
+│   ├── lib/
+│   │   ├── calculadora-v2.ts
+│   │   ├── calculadora.ts
+│   │   ├── config.ts
+│   │   ├── turno.ts
+│   │   └── turnos-data.ts
+│   └── store/
 │       └── usePayrollStore.ts
-│
-├── public/                     # Archivos estáticos
-│   ├── turnos.json            # Backup de datos
-│   └── test-api.js            # Script de prueba
-│
-├── .env.local                  # Variables de entorno
-├── next.config.js              # Configuración Next.js
-├── tailwind.config.ts          # Configuración Tailwind
 └── package.json
 ```
 
 ---
 
-## 💻 Características
+## ✅ Funcionalidades actuales
 
-✅ **Gestión de Turnos** - Seleccionar turnos por quincena  
-✅ **Cálculo Automático** - Devengado, deducciones y neto  
-✅ **Eventos Especiales** - Suspensiones, licencias, incapacidades, extras  
-✅ **Desglose Detallado** - Visualizar cómo se calcula cada valor  
-✅ **Interfaz Moderna** - Responsive design con Tailwind CSS  
-✅ **Sin Latencias** - Deployment integrado (Netlify)
+- Cálculo de nómina por quincena (`15` y `30`).
+- Gestión de turnos por código.
+- Eventos: incapacidad, `Susp/Lic`, compensatorio (CP), extras, deducciones manuales y dispo.
+- Cívicas configurables por usuario (no hardcodeadas).
+- Colilla con desglose de devengados y deducciones.
+- API integrada en Next.js (`/api/v1/*`).
 
 ---
 
-## 🔌 API Endpoints
+## 🔌 API (v1)
 
-Todos bajo `/api`:
+Endpoints recomendados:
 
-### `GET /api/turnos`
-Obtiene lista de turnos disponibles.
+- `GET /api/v1/turnos`
+- `POST /api/v1/calcular`
+- `POST /api/v1/calcular-con-eventos`
 
-```bash
-curl http://localhost:3000/api/turnos
-```
-
-### `POST /api/calcular`
-Calcula nómina básica (solo turnos).
+Ejemplo básico:
 
 ```bash
-curl -X POST http://localhost:3000/api/calcular \
+curl -X POST http://localhost:3000/api/v1/calcular \
   -H "Content-Type: application/json" \
-  -d '{"quincena": "2024-01", "turnos": ["250M"]}'
+  -d '{"quincena":"30","turnos":["250M"],"civicas":0}'
 ```
 
-### `POST /api/calcular-con-eventos`
-Calcula nómina con eventos especiales.
+Ejemplo con eventos:
 
 ```bash
-curl -X POST http://localhost:3000/api/calcular-con-eventos \
+curl -X POST http://localhost:3000/api/v1/calcular-con-eventos \
   -H "Content-Type: application/json" \
   -d '{
-    "quincena": "2024-01",
-    "turnos": ["250M"],
-    "eventos": [{"tipo": "extra", "minutos": 60, "recargo": 0.35}]
+    "quincena":"30",
+    "turnos":["250M"],
+    "eventos":[{"tipo":"extra","minutos":60,"recargo":0.35}],
+    "civicas":5
   }'
 ```
 
 ---
 
-## 💰 Configuración de Negocio
+## 💰 Reglas de negocio (config actual)
 
-### Salario
-- **Mensual**: $2,347,526
-- **Quincena**: $1,173,763
-- **Hora**: $13,041.81
+Definidas en `frontend/src/lib/config.ts`:
 
-### Franja Horaria
-| Franja | Horario | Recargo |
-|--------|---------|---------|
-| Diurna | 6:00-19:00 | 0% |
-| Nocturna | 19:00-6:00 | +35% |
-| Dom. Diurna | 6:00-19:00 | +80% |
-| Dom. Nocturna | 19:00-6:00 | +210% |
-
-### Deducciones
-- **Salud**: 4% del devengado
-- **Pensión**: 4% del devengado
-
-### Beneficios
-- **Cívicas**: 24 pasajes × $3,820 = $91,680/quincena
-- **Auxilio**: Proporcional a días laborados
+- Salario básico mensual: **$2,347,526**
+- Salario quincena: **$1,173,763**
+- Valor hora: **$13,041.81**
+- Recargo nocturno ordinario: **35%**
+- Recargos festivos: **80% / 210%**
+- Salud: **4%**
+- Pensión: **4%**
+- Auxilio transporte mensual: **$200,000**
+- Cívica por pasaje: **$3,820**
 
 ---
 
-## 🔧 Archivos Clave
-
-### **`src/lib/calculadora.ts`** (300+ líneas)
-Motor de cálculo con métodos para:
-- Calcular horas por franja (diurna/nocturna)
-- Aplicar recargos según tipo de día
-- Procesar eventos especiales
-- Calcular deducciones y beneficios
-
-### **`src/lib/config.ts`**
-Todas las constantes de negocio en un lugar centralizado.
-
-### **`src/lib/turnos-data.ts`**
-Catálogo de 176 turnos en formato TypeScript para rápido acceso.
-
-### **`src/app/api/calcular/route.ts`**
-Endpoint que recibe turnos y retorna nómina completa.
-
----
-
-## 📦 Deploy en Netlify
-
-Ver [DEPLOY.md](DEPLOY.md)
-
-**Resumen:**
-1. Push a GitHub
-2. Conectar en Netlify
-3. Configurar `NEXT_PUBLIC_API_BASE_URL=/api` (ya viene por defecto)
-4. Netlify detecta automáticamente Next.js y deploya
-
----
-
-## 📚 Documentación Adicional
-
-- **[DEPLOY.md](DEPLOY.md)** - Guía detallada de deployment
-- **[GUIA_USO.md](GUIA_USO.md)** - Manual de usuario (en construcción)
-
----
-
-## 🛠️ Stack Tecnológico
-
-**Frontend:**
-- Next.js 16.1.6 (React 19)
-- TypeScript
-- Tailwind CSS
-- Zustand (state management)
-- Axios (HTTP client)
-
-**Backend:**
-- Next.js API Routes
-- TypeScript (lógica migrada de Python)
-
-**Deployment:**
-- Netlify (recomendado)
-
----
-
-## 📝 Scripts Disponibles
+## 📝 Scripts
 
 ```bash
-npm run dev      # Servidor con hot-reload
-npm run build    # Compilar para producción  
-npm run start    # Ejecutar versión producción
-npm run lint     # Verificar código
+npm run dev
+npm run build
+npm run start
+npm run lint
+npm run test
 ```
 
 ---
 
-## 🔄 Cambios Principales (v2.0)
+## ☁️ Deploy en Vercel (recomendado)
 
-- ✅ Backend Python migrado a TypeScript
-- ✅ API integrada en Next.js API Routes
-- ✅ Sin servidor separado = sin latencias
-- ✅ Deploy único en Netlify
-- ✅ Mejor rendimiento y mantenibilidad
+1. Subir proyecto a GitHub.
+2. Importar repo en Vercel.
+3. Configurar:
+   - **Framework Preset**: Next.js
+   - **Root Directory**: `frontend`
+4. Variable de entorno:
+   - `NEXT_PUBLIC_API_BASE_URL=/api`
+5. Deploy.
 
 ---
 
-**Última actualización:** 24 de febrero de 2026  
-**Versión:** 2.0 (Integrada en Next.js)
+## 🧪 Troubleshooting rápido
+
+### Error 404 en chunks (`/_next/static/chunks/...`)
+Suele ser caché de `.next` o múltiples dev servers.
+
+Solución recomendada:
+
+1. Cerrar servidores `npm run dev` activos.
+2. Borrar `frontend/.next` (y opcional `frontend/node_modules/.cache`).
+3. Ejecutar de nuevo `npm run dev`.
+4. Recargar navegador con `Ctrl + F5`.
+
+### Error 400 al agregar un turno
+Normalmente ocurre por formato de hora inválido en `turnos-data.ts`.
+Formato válido: `HH:MM` (ejemplo `16:20`).
+
+---
+
+**Última actualización:** 15 de marzo de 2026
