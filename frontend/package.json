@@ -29,7 +29,7 @@
     "clsx": "2.1.1",
     "framer-motion": "^11.18.2",
     "lucide-react": "0.462.0",
-    "next": "15.1.0",
+    "next": "15.5.12",
     "postcss": "8.4.49",
     "react": "19.0.0",
     "react-dom": "19.0.0",
@@ -47,7 +47,7 @@
     "@types/react-dom": "19.0.0",
     "@vitest/ui": "^2.0.5",
     "eslint": "9.17.0",
-    "eslint-config-next": "15.1.0",
+    "eslint-config-next": "15.5.12",
     "ts-node": "^10.9.2",
     "vitest": "^2.0.5"
   }
