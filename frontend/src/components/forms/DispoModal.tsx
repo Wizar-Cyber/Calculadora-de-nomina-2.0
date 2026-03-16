@@ -14,6 +14,7 @@ interface DispoModalProps {
   open: boolean;
   onClose: () => void;
   onSubmit: (data: { inicio: string; fin: string; festivo: boolean }) => Promise<void>;
+  onSuccess?: () => void;
 }
 
 const dispoSchema = z.object({
@@ -22,7 +23,7 @@ const dispoSchema = z.object({
   festivo: z.boolean().default(false),
 });
 
-export function DispoModal({ open, onClose, onSubmit }: DispoModalProps) {
+export function DispoModal({ open, onClose, onSubmit, onSuccess }: DispoModalProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
@@ -43,6 +44,7 @@ export function DispoModal({ open, onClose, onSubmit }: DispoModalProps) {
       setSuccessMessage('Tiempo disponible agregado.');
       reset();
       setTimeout(() => setSuccessMessage(null), 2000);
+      onSuccess?.();
       onClose();
     } catch (error) {
       setErrorMessage('No se pudo agregar. Verifica conexión o intenta de nuevo.');

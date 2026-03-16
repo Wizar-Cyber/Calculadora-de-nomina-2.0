@@ -23,6 +23,7 @@ interface ExtrasModalProps {
   mode?: 'extras' | 'deduccion';
   title?: string;
   onClose: () => void;
+  onSuccess?: (mode: 'extras' | 'deduccion') => void;
 }
 
 const RECARGOS = [
@@ -47,6 +48,7 @@ export function ExtrasModal({
   mode = 'extras',
   title = 'Agregar Horas Extras',
   onClose,
+  onSuccess,
 }: ExtrasModalProps) {
   const isDeduccion = mode === 'deduccion';
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -78,6 +80,7 @@ export function ExtrasModal({
       setSuccessMessage('Extras guardadas.');
       extrasForm.reset();
       setTimeout(() => setSuccessMessage(null), 2000);
+      onSuccess?.('extras');
       onClose();
     } catch (error) {
       setErrorMessage('No se pudo guardar. Verifica conexión o intenta de nuevo.');
@@ -95,6 +98,7 @@ export function ExtrasModal({
       setSuccessMessage('Deducción guardada.');
       deduccionForm.reset();
       setTimeout(() => setSuccessMessage(null), 2000);
+      onSuccess?.('deduccion');
       onClose();
     } catch (error) {
       setErrorMessage('No se pudo guardar. Verifica conexión o intenta de nuevo.');

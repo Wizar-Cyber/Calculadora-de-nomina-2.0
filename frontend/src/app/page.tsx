@@ -107,6 +107,13 @@ export default function Home() {
         mode={modalType ?? 'extras'}
         title={modalType === 'deduccion' ? 'Agregar Deducción' : 'Agregar Horas Extras'}
         onClose={() => setModalType(null)}
+        onSuccess={(mode) => {
+          if (mode === 'deduccion') {
+            showToast('Deducción agregada correctamente', 'success');
+            return;
+          }
+          showToast('Horas extras agregadas correctamente', 'success');
+        }}
       />
 
       <DispoModal
@@ -114,8 +121,8 @@ export default function Home() {
         onClose={() => setDispoModalOpen(false)}
         onSubmit={async (data) => {
           await addDispo(data);
-          showToast('Tiempo disponible agregado correctamente', 'success');
         }}
+        onSuccess={() => showToast('Tiempo disponible agregado correctamente', 'success')}
       />
 
       <CivicasModal
