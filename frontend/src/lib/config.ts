@@ -14,7 +14,7 @@ export const VALOR_MINUTO = VALOR_HORA / 60;
 // ----------------------------
 // AUXILIO / CÍVICAS
 // ----------------------------
-export const AUXILIO_TRANSPORTE = 249095; // Mensual
+export const AUXILIO_TRANSPORTE = 200000; // Mensual
 export const PASAJES_CIVICA_CANTIDAD = 24;
 export const PASAJES_CIVICA_VALOR = 3820;
 

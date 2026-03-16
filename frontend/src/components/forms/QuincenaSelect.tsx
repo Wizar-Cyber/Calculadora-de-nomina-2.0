@@ -4,7 +4,7 @@ import { usePayrollStore } from '@/store/usePayrollStore';
 const QUINCENAS = ['15', '30'];
 
 export function QuincenaSelect() {
-  const { quincena, setQuincena, calculatePayroll } = usePayrollStore();
+  const { quincena, setQuincena } = usePayrollStore();
 
   return (
     <div className="space-y-2">
@@ -12,8 +12,7 @@ export function QuincenaSelect() {
       <Select
         value={quincena}
         onValueChange={(value) => {
-          setQuincena(value);
-          void calculatePayroll();
+          void setQuincena(value);
         }}
       >
         <SelectTrigger>

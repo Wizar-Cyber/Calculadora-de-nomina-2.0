@@ -1,27 +1,33 @@
+'use client';
+
 import { DevengadosCard } from '@/components/payroll/DevengadosCard';
 import { DeduccionesCard } from '@/components/payroll/DeduccionesCard';
 import { NetoCard } from '@/components/payroll/NetoCard';
-import { formatCurrency } from '@/lib/utils';
 import { usePayrollStore } from '@/store/usePayrollStore';
 
-interface PayrollSlipProps {
-  devengado: number;
-  deducciones: number;
-  neto: number;
-  auxilio: number;
-  civicas: number;
-}
+/**
+ * PayrollSlip - Muestra la colilla de pago con todos los detalles
+ * Obtiene todos los datos directamente del store (no de props)
+ */
+export function PayrollSlip() {
+  const { 
+    desgloseDevengados, 
+    desgloseDeducciones, 
+    diasTrabajados,
+    devengado,
+    deducciones,
+    neto,
+    auxilio,
+    civicas
+  } = usePayrollStore();
 
-export function PayrollSlip({ devengado, deducciones, neto, auxilio, civicas }: PayrollSlipProps) {
-  const { desgloseDevengados, desgloseDeducciones, diasTrabajados } = usePayrollStore();
-  
-  console.log('PayrollSlip - Received desglose:', { desgloseDevengados, desgloseDeducciones, diasTrabajados });
+  const totalDevengadoColilla = devengado + auxilio + civicas;
 
   return (
     <div className="overflow-hidden rounded-lg sm:rounded-2xl border border-white/10 shadow-xl">
       <div className="flex flex-col border-y border-gray-200 sm:flex-row">
         <div className="flex-1 flex flex-col min-h-0 border-b sm:border-b-0 sm:border-r border-gray-200">
-          <DevengadosCard items={desgloseDevengados} total={devengado} diasTrabajados={diasTrabajados} />
+          <DevengadosCard items={desgloseDevengados} total={totalDevengadoColilla} diasTrabajados={diasTrabajados} />
         </div>
         <div className="flex-1 flex flex-col min-h-0">
           <DeduccionesCard items={desgloseDeducciones} total={deducciones} />

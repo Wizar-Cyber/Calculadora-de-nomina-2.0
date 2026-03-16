@@ -35,9 +35,6 @@ const formatDeduccionValue = (label: string, value: number): string => {
 };
 
 export function DeduccionesCard({ items, total }: DeduccionesCardProps) {
-  // Debug log
-  console.log('DeduccionesCard items:', items, 'total:', total);
-  
   return (
     <div className="bg-gray-50 p-3 sm:p-6 text-slate-800 flex flex-col flex-grow min-h-0">
       <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold uppercase tracking-wider">
@@ -47,7 +44,7 @@ export function DeduccionesCard({ items, total }: DeduccionesCardProps) {
         <span className="truncate">Deducciones</span>
       </div>
       <div className="mt-2 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm flex-grow">
-        {Object.entries(items).map(([label, value]) => (
+        {Object.entries(items || {}).map(([label, value]) => (
           <div key={label} className="flex items-center justify-between gap-2">
             <span className="text-slate-600 truncate">{formatDeduccionLabel(label, value)}</span>
             <span className="font-semibold text-slate-900 flex-shrink-0 text-right">{formatDeduccionValue(label, value)}</span>

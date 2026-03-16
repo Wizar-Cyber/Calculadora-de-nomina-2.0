@@ -7,7 +7,11 @@
     "build": "next build",
     "export": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:ui": "vitest --ui",
+    "generate:turnos": "npx ts-node scripts/generate-turnos.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "3.10.0",
@@ -41,7 +45,10 @@
     "@types/node": "22.0.0",
     "@types/react": "19.0.0",
     "@types/react-dom": "19.0.0",
+    "@vitest/ui": "^2.0.5",
     "eslint": "9.17.0",
-    "eslint-config-next": "15.1.0"
+    "eslint-config-next": "15.1.0",
+    "ts-node": "^10.9.2",
+    "vitest": "^2.0.5"
   }
 }

@@ -4,10 +4,9 @@
  */
 export interface Turno {
   codigo: string;              // Código único del turno (ej: "250M")
-  descripcion: string;         // Descripción legible del turno
+  descripcion?: string;        // Descripción legible del turno (opcional)
   hora_inicio: string;         // Hora de inicio en formato HH:MM
   hora_fin: string;            // Hora de finalización en formato HH:MM
-  descanso: any[];             // Información de pausas/descansos
   festivo: boolean;            // Indica si es día festivo
   inicio?: string;             // Alternativa para hora_inicio
   fin?: string;                // Alternativa para hora_fin

@@ -11,12 +11,14 @@ import { QuincenaSelect } from '@/components/forms/QuincenaSelect';
 import { Footer } from '@/components/layout/Footer';
 import { ExtrasModal } from '@/components/forms/ExtrasModal';
 import { DispoModal } from '@/components/forms/DispoModal';
+import { CivicasModal } from '@/components/forms/CivicasModal';
 import { ToastNotification } from '@/components/ui/ToastNotification';
 import { usePayrollStore } from '@/store/usePayrollStore';
 
 export default function Home() {
   const [modalType, setModalType] = useState<'extras' | 'deduccion' | null>(null);
   const [dispoModalOpen, setDispoModalOpen] = useState(false);
+  const [civicasModalOpen, setCivicasModalOpen] = useState(false);
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' | 'info' } | null>(null);
 
   const showToast = (message: string, type: 'success' | 'error' | 'info' = 'success') => {
@@ -28,14 +30,9 @@ export default function Home() {
     shifts,
     eventos,
     neto,
-    devengado,
-    deducciones,
-    auxilio,
-    civicas,
     loadTurnos,
     addCP,
     addSuspension,
-    addLicencia,
     addIncapacidad,
     addDispo,
     resetPayroll,
@@ -66,23 +63,20 @@ export default function Home() {
                 onAction={async (action) => {
                   if (action === 'Extras') setModalType('extras');
                   if (action === 'Deducción') setModalType('deduccion');
+                  if (action === 'Cívicas') setCivicasModalOpen(true);
                   if (action === 'CP') {
                     await addCP();
                     showToast('Compensatorio agregado correctamente', 'success');
                   }
-                  if (action === 'Suspensión') {
+                  if (action === 'Susp/Lic') {
                     await addSuspension();
-                    showToast('Suspensión agregada correctamente', 'info');
-                  }
-                  if (action === 'Licencia') {
-                    await addLicencia();
-                    showToast('Licencia agregada correctamente', 'info');
+                    showToast('Susp/Lic agregada correctamente', 'info');
                   }
                   if (action === 'Incapacidad') {
                     await addIncapacidad();
                     showToast('Incapacidad agregada correctamente', 'info');
                   }
-                  if (action === 'DISPO') setDispoModalOpen(true);
+                  if (action === 'Dispo') setDispoModalOpen(true);
                   if (action === 'Reset') {
                     await resetPayroll();
                     showToast('Nómina reseteada a valores básicos', 'success');
@@ -102,13 +96,7 @@ export default function Home() {
         {/* SECCIÓN RESULTADO */}
         <section>
           <h2 className="mb-4 sm:mb-6 text-xl sm:text-2xl font-bold text-white">Colilla de Pago</h2>
-          <PayrollSlip 
-            devengado={devengado} 
-            deducciones={deducciones} 
-            neto={neto}
-            auxilio={auxilio}
-            civicas={civicas}
-          />
+          <PayrollSlip />
         </section>
 
         <Footer />
@@ -128,6 +116,11 @@ export default function Home() {
           await addDispo(data);
           showToast('Tiempo disponible agregado correctamente', 'success');
         }}
+      />
+
+      <CivicasModal
+        open={civicasModalOpen}
+        onOpenChange={setCivicasModalOpen}
       />
 
       {toast && (

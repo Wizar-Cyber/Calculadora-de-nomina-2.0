@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import type { Shift, Turno } from '@/lib/types';
 import { calcularNomina, calcularNominaConEventos, fetchTurnos } from '@/lib/api';
 
+let payrollRequestSequence = 0;
+
 interface PayrollState {
   quincena: string;
   shifts: Shift[];
@@ -14,11 +16,13 @@ interface PayrollState {
   neto: number;
   auxilio: number;
   civicas: number;
+  civicasCantidad: number;
   desgloseDevengados: Record<string, number | string>;
   desgloseDeducciones: Record<string, number>;
   diasTrabajados: number;
 
-  setQuincena: (q: string) => void;
+  setQuincena: (q: string) => Promise<void>;
+  setCivicasCantidad: (cantidad: number) => void;
   loadTurnos: () => Promise<void>;
   addShift: (shift: Shift) => void;
   removeShift: (index: number) => void;
@@ -50,11 +54,16 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
   neto: 0,
   auxilio: 0,
   civicas: 0,
+  civicasCantidad: 0,
   desgloseDevengados: {},
   desgloseDeducciones: {},
   diasTrabajados: 0,
 
-  setQuincena: (q) => set({ quincena: q }),
+  setQuincena: async (q) => {
+    set({ quincena: q });
+    await get().calculatePayroll();
+  },
+  setCivicasCantidad: (cantidad) => set({ civicasCantidad: Math.max(0, Math.floor(cantidad || 0)) }),
 
   loadTurnos: async () => {
     try {
@@ -74,14 +83,20 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       fin: (turnoCompleto?.hora_fin || shift.fin)?.slice(0, 5) || ''
     };
     set((state) => ({ shifts: [...state.shifts, shiftConHoras] }));
-    void get().calculatePayroll();
+    // Usar setTimeout para asegurar que el estado se actualice antes de calcular
+    setTimeout(() => {
+      void get().calculatePayroll();
+    }, 0);
   },
 
   removeShift: (index) => {
     set((state) => ({
       shifts: state.shifts.filter((_, i) => i !== index),
     }));
-    void get().calculatePayroll();
+    // Usar setTimeout para asegurar que el estado se actualice antes de calcular
+    setTimeout(() => {
+      void get().calculatePayroll();
+    }, 0);
   },
 
   clearAll: () =>
@@ -95,6 +110,7 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       neto: 0,
       auxilio: 0,
       civicas: 0,
+      civicasCantidad: 0,
       desgloseDevengados: {},
       desgloseDeducciones: {},
       diasTrabajados: 0,
@@ -129,18 +145,19 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
   },
 
   calculatePayroll: async () => {
-    const { quincena, shifts, eventos, extras, deduccionesManuals } = get();
+    const { quincena, shifts, eventos, extras, deduccionesManuals, civicasCantidad } = get();
     const codigos = shifts.map((s) => s.codigo);
+    const requestId = ++payrollRequestSequence;
 
     try {
       // Construir lista de eventos incluyendo los que vienen del estado
       const eventosAgrupados: Record<string, number> = {};
       eventos.forEach(e => {
-        const tipo = e.tipo === 'Suspensión' ? 'suspension' : 
+        const tipo = e.tipo === 'Suspensión' || e.tipo === 'Susp/Lic' ? 'suspension' : 
                      e.tipo === 'Licencia' ? 'licencia' :
                      e.tipo === 'Incapacidad' ? 'incapacidad' :
                      e.tipo === 'CP' ? 'cp' :
-                     e.tipo === 'DISPO' ? 'dispo' :
+                     e.tipo === 'DISPO' || e.tipo === 'Dispo' ? 'dispo' :
                      e.tipo.toLowerCase();
         eventosAgrupados[tipo] = (eventosAgrupados[tipo] || 0) + 1;
       });
@@ -172,27 +189,29 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
       
       // Si hay eventos o extras o deducciones, usar calcularNominaConEventos
       if (eventosParaBackend.length > 0) {
-        const data = await calcularNominaConEventos(quincena, codigos, eventosParaBackend);
+        const data = await calcularNominaConEventos(quincena, codigos, eventosParaBackend, civicasCantidad);
+        if (requestId !== payrollRequestSequence) return;
         set({
           devengado: data.devengado,
           deducciones: data.deducciones,
           neto: data.neto,
           auxilio: data.auxilio,
           civicas: data.civicas,
-          desgloseDevengados: data.desglose_devengados,
-          desgloseDeducciones: data.desglose_deducciones,
+          desgloseDevengados: data.desglose_devengados || {},
+          desgloseDeducciones: data.desglose_deducciones || {},
           diasTrabajados: data.dias_trabajados,
         });
       } else {
-        const data = await calcularNomina(quincena, codigos);
+        const data = await calcularNomina(quincena, codigos, civicasCantidad);
+        if (requestId !== payrollRequestSequence) return;
         set({
           devengado: data.devengado,
           deducciones: data.deducciones,
           neto: data.neto,
           auxilio: data.auxilio,
           civicas: data.civicas,
-          desgloseDevengados: data.desglose_devengados,
-          desgloseDeducciones: data.desglose_deducciones,
+          desgloseDevengados: data.desglose_devengados || {},
+          desgloseDeducciones: data.desglose_deducciones || {},
           diasTrabajados: data.dias_trabajados,
         });
       }
@@ -222,8 +241,8 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
   addSuspension: async () => {
     try {
       get().addEvento({
-        tipo: 'Suspensión',
-        codigo: 'SUSP',
+        tipo: 'Susp/Lic',
+        codigo: 'SUSPLIC',
         inicio: '-',
         fin: '-',
         detalles: 'Sin pago'
@@ -232,7 +251,7 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
     } catch (error) {
       console.error('Error agregando suspensión:', error);
       set((state) => ({
-        eventos: state.eventos.filter((e) => e.tipo !== 'Suspensión')
+        eventos: state.eventos.filter((e) => e.tipo !== 'Suspensión' && e.tipo !== 'Susp/Lic')
       }));
     }
   },
@@ -277,7 +296,7 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
     try {
       // Agregar DISPO a eventos
       get().addEvento({
-        tipo: 'DISPO',
+        tipo: 'Dispo',
         codigo: 'DISPO',
         inicio: data.inicio.slice(0, 5),
         fin: data.fin.slice(0, 5),
@@ -311,7 +330,7 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
     const { quincena } = get();
     try {
       // Reset to basic values only
-      const data = await calcularNomina(quincena, []);
+      const data = await calcularNomina(quincena, [], 0);
       
       set({
         devengado: data.devengado,
@@ -319,8 +338,9 @@ export const usePayrollStore = create<PayrollState>((set, get) => ({
         neto: data.neto,
         auxilio: data.auxilio,
         civicas: data.civicas,
-        desgloseDevengados: data.desglose_devengados,
-        desgloseDeducciones: data.desglose_deducciones,
+        civicasCantidad: 0,
+        desgloseDevengados: data.desglose_devengados || {},
+        desgloseDeducciones: data.desglose_deducciones || {},
         diasTrabajados: data.dias_trabajados,
         // Clear all shifts and eventos
         shifts: [],

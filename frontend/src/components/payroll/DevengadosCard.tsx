@@ -53,9 +53,6 @@ const formatCurrencyValue = (value: number | string): string => {
 };
 
 export function DevengadosCard({ items, total, diasTrabajados }: DevengadosCardProps) {
-  // Debug log
-  console.log('DevengadosCard items:', items, 'total:', total);
-  
   return (
     <div className="bg-white p-3 sm:p-6 text-slate-800 flex flex-col flex-grow min-h-0">
       <div className="flex items-center gap-2 text-xs sm:text-sm font-semibold uppercase tracking-wider">
@@ -65,7 +62,7 @@ export function DevengadosCard({ items, total, diasTrabajados }: DevengadosCardP
         <span className="truncate">Devengados</span>
       </div>
       <div className="mt-2 sm:mt-4 space-y-1.5 sm:space-y-2 text-xs sm:text-sm flex-grow">
-        {Object.entries(items).map(([label, value]) => (
+        {Object.entries(items || {}).map(([label, value]) => (
           <div key={label} className="flex items-center justify-between gap-2">
             <span className="text-slate-600 truncate">{formatConceptLabel(label, value, diasTrabajados)}</span>
             <span className="font-semibold text-slate-900 flex-shrink-0 text-right">{formatCurrencyValue(value)}</span>
