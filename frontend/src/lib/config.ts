@@ -5,7 +5,7 @@
 // ----------------------------
 // SALARIO / JORNADA
 // ----------------------------
-export const SALARIO_BASICO_MENSUAL = 2347526;
+export const SALARIO_BASICO_MENSUAL = 2626357;
 export const SALARIO_QUINCENA = SALARIO_BASICO_MENSUAL / 2;
 export const HORAS_JORNADA = 6;
 export const VALOR_HORA = 13041.81; // Salario / 30 / 6
