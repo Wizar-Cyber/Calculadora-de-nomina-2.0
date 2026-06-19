@@ -21,4 +21,4 @@ El despliegue oficial se realiza en **Vercel** usando `frontend/` como root del 
 
 ---
 
-**Última actualización:** 16 de marzo de 2026
+**Última actualización:**  19 de junio de 2026
